@@ -1,6 +1,6 @@
 import { mount } from 'cypress/react';
 
-//import '../../src/styles.css';
+import '../../src/lib/styles.css';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace

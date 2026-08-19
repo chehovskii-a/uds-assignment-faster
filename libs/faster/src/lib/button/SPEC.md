@@ -15,23 +15,59 @@ File: `lXoWsgMekR00jKGtXIffk0` · Page node: `15:12480`
 
 ## Public API
 
+```tsx
+<Button />
+```
+
 ```ts
 type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'link';
 type ButtonSize = 'large' | 'medium' | 'small';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonState {
+  disabled: boolean;
+}
+
+interface ButtonProps extends Omit<React.ComponentPropsWithRef<'button'>, 'size'> {
   variant?: ButtonVariant;  // default 'primary'
   size?: ButtonSize;        // default 'large'
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  iconOnly?: boolean;       // square box, no label
+  iconOnly?: boolean;       // square box, no label; not supported with variant="link"
+
+  /** Element composition. */
+  render?: React.ReactElement | ((props: React.ComponentPropsWithRef<'button'>, state: ButtonState) => React.ReactElement);
+  /** Whether the rendered element is a native `<button>`. Default true. */
+  nativeButton?: boolean;
+  /** Keeps the button focusable while `disabled` (async/loading transitions). Default false. */
+  focusableWhenDisabled?: boolean;
 }
 ```
 
-- Figma models `State` (Default / Hover / Pressed / Disabled) as a variant axis. In code these are CSS
-  states: `:hover`, `:active`, `:disabled` — not a prop.
-- Figma never has both icon slots true at once. Code allows both, but the design only specifies one.
-- Icon-only is not defined for `link`.
+### Composition 
+
+`render` accepts either a `ReactElement` (the common path) or a `(props, state) => ReactElement`
+function when the rendered element needs to read `state.disabled` (e.g. to set `data-loading`). Button
+clones the computed native props (`className`, `aria-disabled`, `disabled`, `type`, …) onto whichever
+element `render` supplies, following the same contract as `Dialog.Trigger`/`Dialog.Close`: the custom
+component supplied to `render` must forward its ref and spread the given props onto its DOM element.
+
+`nativeButton` (default `true`) declares whether the element `render` produces is an actual
+`<button>`. It's an escape hatch, not normal usage — prefer the default `<Button />` over
+`<Button render={<div />} nativeButton={false} />`. Anchors are a special case: don't render an `<a>`
+through `Button` (`render={<a href=... />} nativeButton={false}`) — navigation should be an anchor with
+Button *styling*, not Button semantics. Use the exported `buttonVariants` directly instead:
+
+```tsx
+<a href="/settings" className={buttonVariants({ variant: 'primary', size: 'large' })}>
+  Settings
+</a>
+```
+
+`focusableWhenDisabled`: normal `disabled` uses real native `disabled`
+(non-focusable, per platform behavior). `focusableWhenDisabled` keeps the rendered element focusable
+while `aria-disabled="true"` is applied instead of the native attribute — useful so keyboard focus
+isn't dropped when a button transitions into a disabled/loading state
+(`<Button disabled={isSaving} focusableWhenDisabled>`).
 
 ## Size tokens
 
@@ -43,8 +79,6 @@ Applies to `primary`, `outline`, `ghost`. Radius is `4px` for every size and var
 | Medium | 36px | `7px 8px` | Body (14/22) | 16px | 4px | 82px | 36 × 36 |
 | Small | 24px | `3px 4px` | Caption (12/18) | 14px | 4px | 54px | 24 × 24 |
 
-`link` has no padding, no background, no border; its box height equals the line-height (24 / 22 / 18).
-
 ## Typography
 
 Use the named steps from [typography/SPEC.md](../typography/SPEC.md) — no ad-hoc px pairs.
@@ -53,8 +87,6 @@ Use the named steps from [typography/SPEC.md](../typography/SPEC.md) — no ad-h
 | --- | --- | --- |
 | primary | Medium (500) | `text-subtitle font-medium` / `text-body font-medium` / `text-caption font-medium` |
 | outline / ghost / link | Regular (400) | `text-subtitle font-regular` / `text-body font-regular` / `text-caption font-regular` |
-
-Label is centered, `white-space: nowrap`, no text decoration (link variant is **not** underlined).
 
 ## Layout
 
@@ -103,11 +135,16 @@ Label is centered, `white-space: nowrap`, no text decoration (link variant is **
 
 ## Behaviour
 
-- `cursor: pointer` on hover only. Disabled is non-interactive: no hover/pressed styling, no pointer cursor.
+- `cursor: pointer` on hover only. Disabled is non-interactive: no hover/pressed styling, no pointer
+  cursor. All interactive state classes are gated behind `not-aria-disabled:` (rather than relying on
+  `:hover`/`:active` alone), so a `focusableWhenDisabled` button that only has `aria-disabled` — not
+  the native `disabled` attribute — still gets the correct non-interactive styling.
 - Disabled colors are explicit per variant — do not approximate them with `opacity`.
 - Icons are caller-supplied `ReactNode`s. The Figma sample glyph is a "Plus" (`Union` vector, 8.33% inset);
   do not hardcode it into the component.
-- Icon box dimensions are fixed per size (see table); the icon must not stretch the button.
+- Icon box dimensions are fixed per size (see table); the icon must not stretch the button. Icons are
+  rendered in a fixed-size `aria-hidden` wrapper (`[&>svg]:size-full`) so the caller's SVG (whatever
+  its intrinsic size) fills the designed box instead of controlling layout.
 
 ## Required design tokens
 

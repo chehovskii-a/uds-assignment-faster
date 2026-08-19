@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
 import Dialog from './dialog';
+import Button from '../button/button';
 
 function DeleteProjectDialog() {
   return (
@@ -87,5 +88,29 @@ describe('Dialog', () => {
     expect(() => render(<Dialog.Trigger>Open</Dialog.Trigger>)).toThrow(
       /must be rendered inside <Dialog.Root>/,
     );
+  });
+
+  it('composes with Button via render, matching the design-system convention', () => {
+    render(
+      <Dialog.Root>
+        <Dialog.Trigger render={<Button variant="ghost" />}>Delete project</Dialog.Trigger>
+        <Dialog.Content size="small">
+          <Dialog.Title>Delete project?</Dialog.Title>
+          <Dialog.Footer>
+            <Dialog.Close render={<Button variant="ghost" size="medium" />}>Cancel</Dialog.Close>
+            <Dialog.Close render={<Button variant="primary" size="medium" />}>Delete</Dialog.Close>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Delete project' });
+    expect(trigger.tagName).toBe('BUTTON');
+
+    fireEvent.click(trigger);
+    expect(screen.getByText('Delete project?').closest('dialog')?.hasAttribute('open')).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(screen.getByText('Delete project?').closest('dialog')?.hasAttribute('open')).toBe(false);
   });
 });

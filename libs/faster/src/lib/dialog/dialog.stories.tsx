@@ -1,13 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Dialog, type DialogSize } from './dialog';
+import { Button } from '../button/button';
 import { expect, userEvent, within } from 'storybook/test';
 
 function DeleteProjectDialog({ size }: { size?: DialogSize }) {
   return (
     <Dialog.Root>
-      <Dialog.Trigger className="cursor-pointer text-body font-regular text-neutral-600">
-        Delete project
-      </Dialog.Trigger>
+      <Dialog.Trigger render={<Button variant="ghost" />}>Delete project</Dialog.Trigger>
       <Dialog.Content size={size}>
         <Dialog.Title>Delete project?</Dialog.Title>
         <Dialog.Close aria-label="Close" className="absolute right-6 top-6 cursor-pointer">
@@ -15,12 +14,8 @@ function DeleteProjectDialog({ size }: { size?: DialogSize }) {
         </Dialog.Close>
         <Dialog.Description>This action cannot be undone.</Dialog.Description>
         <Dialog.Footer>
-          <Dialog.Close className="cursor-pointer text-body font-regular text-neutral-600">
-            Cancel
-          </Dialog.Close>
-          <Dialog.Close className="cursor-pointer rounded-[4px] bg-primary-600 px-4 py-2 text-body font-medium text-white">
-            Delete
-          </Dialog.Close>
+          <Dialog.Close render={<Button variant="ghost" size="medium" />}>Cancel</Dialog.Close>
+          <Dialog.Close render={<Button variant="primary" size="medium" />}>Delete</Dialog.Close>
         </Dialog.Footer>
       </Dialog.Content>
     </Dialog.Root>
