@@ -8,7 +8,8 @@
 
 ### Figma
 
-https://www.figma.com/design/WYuHdUuUq31HzkdJhoKwXl/TapTap-Design-System%E4%B8%A8Developers--Community-?node-id=12-11244&p=f&t=IdkiBp7B4GxCdKAF-0
+Original: https://www.figma.com/design/WYuHdUuUq31HzkdJhoKwXl/TapTap-Design-System%E4%B8%A8Developers--Community-?node-id=12-11244&p=f&t=IdkiBp7B4GxCdKAF-0
+Duplicate: https://www.figma.com/design/lXoWsgMekR00jKGtXIffk0/TapTap-Design-System%E4%B8%A8Developers--Community---Copy-?node-id=15-12480&p=f&t=NmaF1oCl62G1IJJ7-0
 
 ## Commands
 
