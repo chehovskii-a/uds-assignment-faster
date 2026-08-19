@@ -55,15 +55,17 @@ right-hand adornment (clear / rightIcon / suffix / stepper) is specified at a ti
 Fixed field width in the design is `190px` — this is a spec artifact. The component must be fluid
 (`width: 100%`) and let the consumer constrain it.
 
-| Size | Field height | Font size / line-height | Horizontal padding | Icon box | Clear icon | Help text top offset |
+| Size | Field height | Type step | Horizontal padding | Icon box | Clear icon | Help text top offset |
 | --- | --- | --- | --- | --- | --- | --- |
-| Large | 40px | 16px / 24px | 12px | 18px | 16px | 44px |
-| Medium | 36px | 14px / 22px | 12px | 16px | 14px | 40px |
-| Small | 24px | 12px / 18px | 8px | 14px | 12px | 28px |
+| Large | 40px | Subtitle (16/24) | 12px | 18px | 16px | 44px |
+| Medium | 36px | Body (14/22) | 12px | 16px | 14px | 40px |
+| Small | 24px | Caption (12/18) | 8px | 14px | 12px | 28px |
 
 - Radius: `4px` (all sizes, all compositions).
 - Border: `1px solid`.
-- Font: `PingFang SC`, Regular (400) everywhere — including help text and affixes.
+- Typography: Regular (400) everywhere — including help text and affixes. Use the named steps from
+  [typography/SPEC.md](../typography/SPEC.md): `text-subtitle` / `text-body` / `text-caption` with
+  `font-regular`.
 - Vertical centering: the text line is centered in the field box.
 
 ## Color per state
@@ -87,7 +89,7 @@ Notes:
 ## Help text
 
 - Position: below the field, left-aligned at `x = 0`, at the per-size top offset in the table above.
-- Typography: Large/Medium → 14px / 22px; Small → 12px / 18px.
+- Typography: Large/Medium → Body (`text-body font-regular`); Small → Caption (`text-caption font-regular`).
 - The only color specified in the design is the error color `#F64C4C`. A neutral help-text color is
   not defined by these variants; use `#8E8E8E` (Neutral/500) if a non-error hint is needed.
 - Help text does not affect field height; it is laid out outside the bordered box.
@@ -187,5 +189,6 @@ danger ramps. This spec needs (superset shared with the Button spec):
 }
 ```
 
-Type ramp needed: 12/18, 14/22, 16/24 at weight 400.
+Type tokens (`--text-caption` / `--text-body` / `--text-subtitle` at weight 400) are defined in
+[typography/SPEC.md](../typography/SPEC.md).
 Focus ring: `0 0 1px 1px rgba(21, 197, 206, 0.16)`.

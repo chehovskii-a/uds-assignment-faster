@@ -37,22 +37,22 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 Applies to `primary`, `outline`, `ghost`. Radius is `4px` for every size and variant.
 
-| Size | Height | Padding | Font size / line-height | Icon box | Gap | Min content width | Icon-only box |
+| Size | Height | Padding | Type step | Icon box | Gap | Min content width | Icon-only box |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Large | 40px | `8px` | 16px / 24px | 18px | 4px | 90px | 40 × 40 |
-| Medium | 36px | `7px 8px` | 14px / 22px | 16px | 4px | 82px | 36 × 36 |
-| Small | 24px | `3px 4px` | 12px / 18px | 14px | 4px | 54px | 24 × 24 |
+| Large | 40px | `8px` | Subtitle (16/24) | 18px | 4px | 90px | 40 × 40 |
+| Medium | 36px | `7px 8px` | Body (14/22) | 16px | 4px | 82px | 36 × 36 |
+| Small | 24px | `3px 4px` | Caption (12/18) | 14px | 4px | 54px | 24 × 24 |
 
 `link` has no padding, no background, no border; its box height equals the line-height (24 / 22 / 18).
 
 ## Typography
 
-Family: `PingFang SC`.
+Use the named steps from [typography/SPEC.md](../typography/SPEC.md) — no ad-hoc px pairs.
 
-| Variant | Weight |
-| --- | --- |
-| primary | Medium (500) |
-| outline / ghost / link | Regular (400) |
+| Variant | Weight | Utility (Large / Medium / Small) |
+| --- | --- | --- |
+| primary | Medium (500) | `text-subtitle font-medium` / `text-body font-medium` / `text-caption font-medium` |
+| outline / ghost / link | Regular (400) | `text-subtitle font-regular` / `text-body font-regular` / `text-caption font-regular` |
 
 Label is centered, `white-space: nowrap`, no text decoration (link variant is **not** underlined).
 
@@ -130,4 +130,5 @@ Implementing this spec faithfully requires adding:
 }
 ```
 
-Type ramp needed: 12/18, 14/22, 16/24 with weights 400 and 500.
+Type tokens (`--text-caption` / `--text-body` / `--text-subtitle`, weights 400 and 500) are defined in
+[typography/SPEC.md](../typography/SPEC.md).

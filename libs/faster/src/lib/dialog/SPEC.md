@@ -39,7 +39,7 @@ Backdrop (Smoke)          full viewport, rgba(0, 0, 0, 0.3)
 └── Modal                 white panel, radius 4px, padding 24px, Elevation/4 shadow
     ├── Content           column, gap 16px
     │   ├── Title row     row, gap 8px, title flex-1 + close button
-    │   └── Body          14px / 22px text
+    │   └── Body          Body type step (14/22)
     └── Button Grid       row, gap 8px, right-aligned
 ```
 
@@ -69,14 +69,14 @@ Vertical gap between `Content` and `Button Grid` is **32px**.
 
 ## Typography
 
-Family: `PingFang SC`.
+Use the named steps from [typography/SPEC.md](../typography/SPEC.md) — no ad-hoc px pairs.
 
-| Element | Style | Size / line-height | Weight | Color |
-| --- | --- | --- | --- | --- |
-| Title | Medium/Title | 18px / 26px | 500 | `#1F1F1F` (Neutral/700) |
-| Body | Regular/Body | 14px / 22px | 400 | `#4B4B4B` (Neutral/600) |
-| Cancel label | Regular/Body | 14px / 22px | 400 | `#4B4B4B` |
-| Confirm label | Medium/Body | 14px / 22px | 500 | `#FFFFFF` |
+| Element | Figma style | Utility | Color |
+| --- | --- | --- | --- |
+| Title | Medium/Title (18/26) | `text-title font-medium` | `#1F1F1F` (Neutral/700) |
+| Body | Regular/Body (14/22) | `text-body font-regular` | `#4B4B4B` (Neutral/600) |
+| Cancel label | Regular/Body (14/22) | `text-body font-regular` | `#4B4B4B` |
+| Confirm label | Medium/Body (14/22) | `text-body font-medium` | `#FFFFFF` |
 
 The title occupies the full row height of 26px and is truncated by its flex container, not wrapped in
 the design; the close button sits top-aligned in that 26px row.
@@ -140,4 +140,5 @@ Additions needed in `libs/faster/src/lib/styles.css` (superset shared with the B
 }
 ```
 
-Type ramp needed: 14/22 at weights 400 and 500, plus 18/26 at weight 500.
+Type tokens (`--text-body` at weights 400 and 500, `--text-title` at weight 500) are defined in
+[typography/SPEC.md](../typography/SPEC.md).
