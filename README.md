@@ -6,6 +6,51 @@
 
 [Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/react-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
 
+## Commands
+
+### Workspace
+```
+npx create-nx-workspace@latest my-ui \
+  --preset=react-monorepo \
+  --appName=showcase \
+  --bundler=webpack \
+  --unitTestRunner=jest \
+  --e2eTestRunner=cypress \
+  --ci=github \
+  --style=css
+```
+
+### Library
+
+```
+npx nx g @nx/react:library libs/faster \
+  --unitTestRunner=jest \
+  --linter=eslint \
+  --style=css
+```
+
+### Storybook
+
+```
+npx nx g @nx/react:storybook-configuration '@faster/faster'
+```
+
+### Components
+
+```
+npx nx g @nx/react:component libs/faster/src/lib/button/button \
+  --export \
+  --style=css
+
+npx nx g @nx/react:component libs/faster/src/lib/input/input \
+  --export \
+  --style=css
+
+npx nx g @nx/react:component libs/faster/src/lib/dialog/dialog \
+  --export \
+  --style=css
+```
+
 ## Run tasks
 
 To run the dev server for your app, use:
