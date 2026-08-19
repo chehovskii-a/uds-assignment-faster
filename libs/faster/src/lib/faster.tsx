@@ -1,8 +1,8 @@
-import styles from './faster.module.css';
+import './styles.css';
 
 export function FasterFaster() {
   return (
-    <div className={styles['container']}>
+    <div className="container">
       <h1>Welcome to FasterFaster!</h1>
     </div>
   );

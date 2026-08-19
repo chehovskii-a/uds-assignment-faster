@@ -6,6 +6,10 @@
 
 [Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/react-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
 
+### Figma
+
+https://www.figma.com/design/WYuHdUuUq31HzkdJhoKwXl/TapTap-Design-System%E4%B8%A8Developers--Community-?node-id=12-11244&p=f&t=IdkiBp7B4GxCdKAF-0
+
 ## Commands
 
 ### Workspace
