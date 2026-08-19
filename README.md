@@ -59,6 +59,22 @@ npx nx g @nx/react:stories \
   --interactionTests=true
 ```
 
+### Component tests
+
+```
+npx nx g @nx/react:component-test \
+  --project='@faster/faster' \
+  --componentPath='lib/button/button.tsx'
+
+npx nx g @nx/react:component-test \
+  --project='@faster/faster' \
+  --componentPath='lib/input/input.tsx'
+
+npx nx g @nx/react:component-test \
+  --project='@faster/faster' \
+  --componentPath='lib/dialog/dialog.tsx'
+```
+
 ## Run tasks
 
 To run the dev server for your app, use:
