@@ -51,6 +51,14 @@ npx nx g @nx/react:component libs/faster/src/lib/dialog/dialog \
   --style=css
 ```
 
+### Stories
+
+```
+npx nx g @nx/react:stories \
+  --project='@faster/faster' \
+  --interactionTests=true
+```
+
 ## Run tasks
 
 To run the dev server for your app, use:
