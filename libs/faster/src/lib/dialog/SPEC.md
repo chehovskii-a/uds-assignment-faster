@@ -18,63 +18,114 @@ including the backdrop.
 
 ## Public API
 
+```tsx
+function DeleteProjectDialog() {
+  return (
+    <Dialog.Root>
+      <Dialog.Trigger render={<Button variant="ghost" />}>Delete project</Dialog.Trigger>
+      <Dialog.Content size="small">
+        <Dialog.Title>Delete project?</Dialog.Title>
+        <Dialog.Close aria-label="Close" render={<IconButton />}>
+          <CloseIcon />
+        </Dialog.Close>
+        <Dialog.Description>This action cannot be undone.</Dialog.Description>
+        <Dialog.Footer>
+          <Dialog.Close render={<Button variant="ghost" size="medium" />}>Cancel</Dialog.Close>
+          <Dialog.Close render={<Button variant="primary" size="medium" />} onClick={deleteProject}>
+            Delete
+          </Dialog.Close>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}
+```
+
+### Props
+
 ```ts
 type DialogSize = 'small' | 'medium' | 'large';
 
-interface DialogProps {
-  open: boolean;
-  onClose: () => void;
-  size?: DialogSize;          // default 'small'
-  title?: React.ReactNode;
-  children?: React.ReactNode; // body
-  footer?: React.ReactNode;   // defaults to Cancel + Confirm
-  showClose?: boolean;        // default true
+interface DialogRootProps {
+  children: React.ReactNode;
+  open?: boolean;                          // controlled mode
+  defaultOpen?: boolean;                   // uncontrolled mode, default false
+  onOpenChange?: (open: boolean) => void;
+  closeOnBackdrop?: boolean;                // Figma behavior: true by default
+}
+
+interface DialogContentProps extends React.ComponentPropsWithoutRef<'dialog'> {
+  size?: DialogSize;                       // default 'small'
+}
+
+interface DialogTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  render?: React.ReactElement;      // e.g. render={<Button variant="primary" />}
+}
+
+interface DialogTitleProps extends React.ComponentPropsWithoutRef<'h2'> {}
+
+interface DialogDescriptionProps extends React.ComponentPropsWithoutRef<'p'> {}
+
+interface DialogFooterProps extends React.ComponentPropsWithoutRef<'div'> {}
+
+interface DialogCloseProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  render?: React.ReactElement;      // e.g. render={<Button variant="ghost" size="medium" />}
 }
 ```
+
+###  Figma mapping
+
+| Figma spec | Compound API |
+| --- | --- |
+| `open` | `Dialog.Root open` |
+| `onClose` | `Dialog.Root onOpenChange` |
+| `size` | `Dialog.Content size` |
+| `title` | `Dialog.Title` |
+| body `children` | `Dialog.Description` or arbitrary `Dialog.Content` children |
+| `footer` | `Dialog.Footer` children |
+| `showClose` | presence/absence of a top `Dialog.Close` |
+| backdrop dismissal | `Dialog.Root closeOnBackdrop` |
 
 ## Anatomy
 
 ```
-Backdrop (Smoke)          full viewport, rgba(0, 0, 0, 0.3)
-└── Modal                 white panel, radius 4px, padding 24px, Elevation/4 shadow
-    ├── Content           column, gap 16px
-    │   ├── Title row     row, gap 8px, title flex-1 + close button
-    │   └── Body          Body type step (14/22)
-    └── Button Grid       row, gap 8px, right-aligned
+Dialog.Root
+├── Dialog.Trigger
+└── Dialog.Content            <dialog>, opened via showModal()
+    ├── Dialog.Title
+    ├── Dialog.Close          ← X button (optional, top-right)
+    ├── Dialog.Description
+    └── Dialog.Footer
+        ├── Dialog.Close      ← e.g. Cancel
+        └── Dialog.Close      ← e.g. Confirm/Delete
 ```
-
-Vertical gap between `Content` and `Button Grid` is **32px**.
 
 ## Size tokens
 
-| Size | Modal width | Content width | Position |
-| --- | --- | --- | --- |
-| Small | 400px | 352px | horizontally centered, `top: 100px` |
-| Medium | 600px | 552px | centered both axes |
-| Large | 900px | 852px | centered both axes |
-
-- Content width is always modal width − 48px (the 24px padding on both sides).
-- Modal height is content-driven (202px in the design with the sample two-line body); do not fix it.
-- Radius: `4px` on the modal. Backdrop has no radius (the `8px` on the spec frame is a canvas artifact).
+| Size | Content width | Position |
+| --- | --- | --- |
+| Small | 400px | horizontally centered, `top: 100px` |
+| Medium | 600px | centered both axes |
+| Large | 900px | centered both axes |
 
 ## Spacing
 
 | Gap | Value |
 | --- | --- |
-| Modal padding | 24px |
-| Content → Button Grid | 32px |
-| Title row → Body | 16px |
+| Content padding | 24px |
+| Title/Close row → Description | 16px |
+| Description → Footer | 32px |
 | Title text → Close button | 8px |
-| Cancel → Confirm button | 8px |
+| Footer button gap | 8px |
 
 ## Typography
 
-Use the named steps from [typography/SPEC.md](../typography/SPEC.md) — no ad-hoc px pairs.
+Named steps from [typography/SPEC.md](../typography/SPEC.md)
 
 | Element | Figma style | Utility | Color |
 | --- | --- | --- | --- |
-| Title | Medium/Title (18/26) | `text-title font-medium` | `#1F1F1F` (Neutral/700) |
-| Body | Regular/Body (14/22) | `text-body font-regular` | `#4B4B4B` (Neutral/600) |
+| `Dialog.Title` | Medium/Title (18/26) | `text-title font-medium` | `#1F1F1F` (Neutral/700) |
+| `Dialog.Description` | Regular/Body (14/22) | `text-body font-regular` | `#4B4B4B` (Neutral/600) |
 | Cancel label | Regular/Body (14/22) | `text-body font-regular` | `#4B4B4B` |
 | Confirm label | Medium/Body (14/22) | `text-body font-medium` | `#FFFFFF` |
 
@@ -85,43 +136,42 @@ the design; the close button sits top-aligned in that 26px row.
 
 | Token | Value |
 | --- | --- |
-| Backdrop (Smoke/Default) | `rgba(0, 0, 0, 0.3)` |
-| Modal background | `#FFFFFF` |
+| `::backdrop` (Smoke/Default) | `rgba(0, 0, 0, 0.3)` |
+| Content background | `#FFFFFF` |
 | Elevation/4 shadow | `0 8px 20px rgba(0, 0, 0, 0.06)`, `0 24px 60px rgba(0, 0, 0, 0.12)` |
-
-The MCP export flattens Elevation/4 to `0 8px 10px rgba(0,0,0,0.06), 0 24px 30px rgba(0,0,0,0.12)`;
-prefer the published style values above.
 
 ## Close button
 
 - Box: `14 × 14px`, top-aligned inside the 26px title row, pushed to the right edge.
-- Glyph: an X (`Union` vector, 5.39% inset). Present in all three sizes.
-- Must be a real `<button type="button">` with an accessible label, not a decorative div.
+- Glyph: caller-supplied (an X in the design; `Union` vector, 5.39% inset). Not hardcoded into the
+  component — `Dialog.Close`'s `children` is the glyph.
+- Must have an accessible label (e.g. `aria-label="Close"`) when used as an icon-only close affordance.
 
 ## Footer buttons
 
 Both are **Medium** buttons from the Button component set (`98 × 36`, `8px / 7px` padding, radius 4px,
-82px min content width):
+82px min content width), composed via `render` on `Dialog.Close`:
 
 | Slot | Button variant | Label |
 | --- | --- | --- |
 | Left | Ghost | Cancel |
 | Right | Primary (`bg #15C5CE`) | Confirm |
 
-Reuse the project `Button` component for these — see
-[libs/faster/src/lib/button/REQUIREMENTS.md](../button/REQUIREMENTS.md). The footer must be overridable
-via a `footer` prop; the Cancel/Confirm pair is only the default.
-
 ## Behaviour
 
-- Backdrop covers the viewport and closes the dialog on click (design shows the smoke layer but no
-  interaction states for it — treat dismiss-on-backdrop as the default, overridable).
-- `Escape` closes the dialog.
-- Focus is trapped inside the modal while open and restored to the trigger on close.
-- Render in a portal with `role="dialog"` and `aria-modal="true"`, labelled by the title.
-- Body scroll is locked while open.
-- Modal widths are fixed per size in the design; add a viewport-relative max-width so the Large size
-  does not overflow small screens.
+- `closeOnBackdrop` maps to the `closedby` content attribute: `true` → `closedby="any"` (close
+  requests + light-dismiss on outside click), `false` → `closedby="closerequest"` (Escape/close
+  requests only, no light-dismiss).
+- `Escape` closes the dialog natively via the close-request mechanism.
+- Focus is placed and restored by the browser; the previously focused element is refocused on close.
+- Modal `<dialog>` is placed in the browser's top layer and the rest of the document becomes inert
+  automatically while open.
+- `role="dialog"`/`aria-modal` are implicit for a modally-shown `<dialog>`; label it via
+  `aria-labelledby` pointing at `Dialog.Title`.
+- **Scroll locking is not solved by `<dialog>`** and remains an implementation concern: lock body
+  scroll while `Dialog.Content` is open.
+- `Dialog.Root` supports both controlled (`open` + `onOpenChange`) and uncontrolled (`defaultOpen`)
+  usage; the common case (`<Dialog.Root>` with no props) starts closed.
 
 ## Required design tokens
 
