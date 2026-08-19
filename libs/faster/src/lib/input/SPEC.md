@@ -21,34 +21,108 @@ component set.
 | Figma axis | Values | In code |
 | --- | --- | --- |
 | `Size` | Large / Medium / Small | `size` prop |
-| `State` | Default / Hover / Pressed & Focus / Disabled / Error | CSS `:hover`, `:focus-within`, `:disabled` + `error` prop |
-| `Text Entered` | False / True | derived from value (empty → placeholder color, filled → text color) |
-| `Typing` | False / True | native caret + clear button visibility; not a prop |
+| `State` | Default / Hover / Pressed & Focus / Disabled / Error | shell `:hover`, `:focus-within`, native `disabled`, `invalid` prop |
+| `Text Entered` | False / True | derived from value → `filled` state |
+| `Typing` | False / True | derived from `focused && value` → not a prop |
 | `State 2` | Not Applicable / Clear Hover / Clear Pressed | clear-button `:hover` / `:active` |
 
-`Pressed & Focus` is a single Figma state — implement it as `:focus-within` (the pressed look and the
-focus look are identical).
-
 ## Public API
+
+```tsx
+<Input name="search" placeholder="Search" size="large" />
+<Input leftIcon={<SearchIcon />} placeholder="Search" />
+<Input invalid helpText="This field is required" placeholder="Email" />
+<Input prefix="$" placeholder="0.00" />
+<Input clearable clearIcon={<CircleXIcon />} placeholder="Search" />
+```
 
 ```ts
 type InputSize = 'large' | 'medium' | 'small';
 
-interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> {
-  size?: InputSize;         // default 'large'
-  error?: boolean;
-  helpText?: React.ReactNode;   // rendered below the field; only styled for error in the design
+interface InputState {
+  disabled: boolean;
+  invalid: boolean;
+  filled: boolean;
+  focused: boolean;
+}
+
+interface InputProps extends Omit<React.ComponentPropsWithoutRef<'input'>, 'size' | 'prefix'> {
+  size?: InputSize;              // default 'large'
+  invalid?: boolean;             // renamed from the Figma "error" axis; also sets aria-invalid
+  helpText?: React.ReactNode;    // rendered below the field, wired to aria-describedby
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   prefix?: React.ReactNode;
   suffix?: React.ReactNode;
-  clearable?: boolean;      // shows clear button when focused and non-empty
-  stepper?: boolean;        // number up/down buttons, mutually exclusive with rightIcon/suffix
+  clearable?: boolean;           // shows a clear control while focused and non-empty
+  clearIcon?: React.ReactNode;   // caller-supplied glyph, not hardcoded
+  clearLabel?: string;           // accessible label for the clear control; default "Clear input"
+  onValueChange?: (value: string) => void;
+  onClear?: () => void;
+
+  /** Base UI-style composition of the actual `<input>` (not the visual shell). */
+  render?:
+    | React.ReactElement
+    | ((props: React.ComponentPropsWithoutRef<'input'>, state: InputState) => React.ReactElement);
+
+  /** Styles the visual field shell. `className` still targets the native `<input>`. */
+  rootClassName?: string;
 }
 ```
 
-Figma never combines `leftIcon` with `rightIcon`, nor affixes with icons or the stepper. Only one
-right-hand adornment (clear / rightIcon / suffix / stepper) is specified at a time.
+### `className` vs `rootClassName`
+
+Because `InputProps` otherwise behaves like native `<input>` props, `className` (and `style`,
+`onFocus`, `onChange`, `aria-*`, `ref`, …) target the **actual `<input>`**, exactly like plain HTML.
+`rootClassName` is the one addition — it targets the bordered visual shell:
+
+```tsx
+<Input className="..." rootClassName="..." />
+```
+
+### `render`
+
+`render` composes the actual `<input>` control, **not** the wrapper shell — the shell (border, icons,
+affixes, clear button) is internal anatomy, not something `render` replaces. Given
+`<Input render={<MyInput />} leftIcon={<SearchIcon />} />`, the icon still renders in the shell and
+`MyInput` receives the native input props/ref in place of the plain `<input>`. This is stricter than
+`Button.render`: changing a button's rendered element to another interactive element has legitimate
+uses, but changing an input into something that isn't an actual form control usually does not — the
+custom component supplied to `render` must forward the provided props and ref to a real
+input-compatible control.
+
+### `onValueChange` / `onClear`
+
+`onValueChange?: (value: string) => void` is a convenience alongside the native `onChange`; both work
+together (`<Input onChange={...} />` or `<Input value={query} onValueChange={setQuery} />`). `onClear`
+fires independently of `onValueChange` when the clear control is activated, useful for side effects
+like analytics that shouldn't fire on every keystroke.
+
+## Anatomy
+
+```
+Input
+├── Field shell                    bordered box; :hover / :focus-within / invalid / disabled
+│   ├── Start adornment             prefix, or leftIcon (mutually exclusive)
+│   ├── <input>                     render-composable; owns text/placeholder/caret only
+│   └── End adornment               clear, or rightIcon, or suffix (one at a time)
+└── Help text                       wired to aria-describedby
+```
+
+## CVA structure
+
+Styling is split into small variant functions rather than one large CVA, matching the Button
+precedent:
+
+- `inputRootVariants({ size, invalid, disabled })` — the bordered shell only (background, border,
+  focus ring). Explicit state precedence: default → hover → focus, then **invalid wins** over
+  hover/focus, then **disabled wins** over everything (including invalid) — encoded as `compoundVariants`
+  rather than relying on CSS cascade order across separate variant keys.
+- `inputControlVariants({ size })` — the native `<input>`: text/placeholder/caret color, type step.
+  No border/background here. No `disabled:opacity-*` — disabled colors are explicit per the table
+  below, same rule as Button.
+- `inputIconVariants({ size })` / `inputClearVariants({ size })` — fixed icon boxes.
+- `inputAffixVariants({ size })` — prefix/suffix inner padding + typography.
 
 ## Size tokens
 
@@ -78,21 +152,25 @@ Caret is `#1F1F1F`.
 | Default | `#FFFFFF` | `#E1E1E1` (Neutral/300) | `#4B4B4B` | `#CACACA` | — |
 | Hover | `#FFFFFF` | `#47CFD6` (Primary/500) | `#4B4B4B` | `#CACACA` | — |
 | Pressed & Focus | `#FFFFFF` | `#15C5CE` (Primary/600) | `#4B4B4B` | `#CACACA` | focus ring `0 0 1px 1px rgba(21,197,206,0.16)` |
-| Error | `#FFFFFF` | `#F64C4C` (Danger/600) | `#4B4B4B` | `#CACACA` | help text `#F64C4C` |
+| Invalid (Figma "Error") | `#FFFFFF` | `#F64C4C` (Danger/600) | `#4B4B4B` | `#CACACA` | help text `#F64C4C` |
 | Disabled | `#FAFAFA` (Neutral/50) | `#EEEEEE` (Neutral/200) | `#CACACA` | `#E1E1E1` (Neutral/300) | — |
 
 Notes:
 - Disabled uses **two different** muted text colors: filled value `#CACACA`, empty placeholder `#E1E1E1`.
-- The focus ring appears only in `Pressed & Focus`; it is not applied to hover or error.
-- Error keeps its red border on hover and focus (error wins over interaction states).
+- The focus ring appears only in `Pressed & Focus`; it is not applied to hover or invalid.
+- Invalid keeps its red border on hover and focus (invalid wins over interaction states, but disabled
+  still wins over invalid — see CVA structure above).
 
 ## Help text
 
 - Position: below the field, left-aligned at `x = 0`, at the per-size top offset in the table above.
 - Typography: Large/Medium → Body (`text-body font-regular`); Small → Caption (`text-caption font-regular`).
-- The only color specified in the design is the error color `#F64C4C`. A neutral help-text color is
-  not defined by these variants; use `#8E8E8E` (Neutral/500) if a non-error hint is needed.
+- The only color specified in the design is the error color `#F64C4C` (used when `invalid`). A neutral
+  help-text color is not defined by these variants; use `#8E8E8E` (Neutral/500) if a non-invalid hint
+  is needed.
 - Help text does not affect field height; it is laid out outside the bordered box.
+- The field and help text are linked via `aria-describedby` (generated id, merged with any
+  caller-supplied `aria-describedby` rather than overwritten).
 
 ## Composition geometry
 
@@ -126,7 +204,7 @@ Icons are vertically centered (`top: 50%`, `translateY(-50%)`).
 - Glyph is a filled circle-x (`Subtract` vector, 4.17% inset).
 - Visible only while focused and the field is non-empty. Hover / pressed are the `State 2` values.
 
-### Number stepper (`11:9747`)
+### Number stepper (`11:9747`) — not implemented on `Input`
 
 Right-edge column, full height, rounded on the right corners only (`4px`), `overflow: hidden`.
 
@@ -158,13 +236,11 @@ The prefix/suffix-only sets use the same offsets, applied to whichever side is p
 - Field is fluid width; the `190px` in Figma is only the spec canvas width.
 - Placeholder text does not wrap (`white-space: nowrap` in the design); with a fluid width, allow the
   native input to clip instead.
-- Disabled is non-interactive: no hover border change, no focus ring, no clear button, stepper
-  buttons inert.
-- Clear button and stepper buttons must be real focusable controls (`type="button"`), not decorative
-  divs, with accessible labels.
-- Icons/affixes are caller-supplied `ReactNode`s. The Figma sample glyphs (Search, circle-x, chevrons)
-  must not be hardcoded into the component — except the stepper chevrons, which are intrinsic to the
-  stepper.
+- Disabled is non-interactive: no hover border change, no focus ring, no clear button.
+- The clear control must be a real focusable control (`type="button"`), not a decorative div, with an
+  accessible label (`clearLabel`, default `"Clear input"`).
+- Icons/affixes/the clear glyph are caller-supplied `ReactNode`s. The Figma sample glyphs (Search,
+  circle-x) must not be hardcoded into the component.
 
 ## Required design tokens
 
