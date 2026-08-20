@@ -3,15 +3,15 @@
 Source of truth: TapTap Design System (Figma)
 File: `lXoWsgMekR00jKGtXIffk0` · Page node: `15:12480`
 
-| Component set     | Figma node | Variant axes                                        |
-| ----------------- | ---------- | --------------------------------------------------- |
-| Primary           | `15:12968` | Size × State × Left Icon × Right Icon (36 variants) |
-| Outline           | `15:14180` | Size × State × Left Icon × Right Icon (36 variants) |
-| Ghost             | `15:15392` | Size × State × Left Icon × Right Icon (36 variants) |
-| Link              | `15:16610` | Size × State × Left Icon × Right Icon (36 variants) |
-| Icon-only Primary | `15:20350` | Size × State (12 variants)                          |
-| Icon-only Outline | `15:20577` | Size × State (12 variants)                          |
-| Icon-only Ghost   | `15:20824` | Size × State (12 variants)                          |
+| Component set | Figma node | Variant axes                                        |
+| ------------- | ---------- | --------------------------------------------------- |
+| Primary       | `15:12968` | Size × State × Left Icon × Right Icon (36 variants) |
+| Outline       | `15:14180` | Size × State × Left Icon × Right Icon (36 variants) |
+| Ghost         | `15:15392` | Size × State × Left Icon × Right Icon (36 variants) |
+| Link          | `15:16610` | Size × State × Left Icon × Right Icon (36 variants) |
+
+Note: the Figma file also defines dedicated Icon-only component sets (`15:20350`, `15:20577`,
+`15:20824`). These are a separate component, not a `Button` variant — not implemented here.
 
 ## Public API
 
@@ -32,7 +32,6 @@ interface ButtonProps extends Omit<React.ComponentPropsWithRef<'button'>, 'size'
   size?: ButtonSize; // default 'large'
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  iconOnly?: boolean; // square box, no label; not supported with variant="link"
 
   /** Element composition. */
   render?: React.ReactElement | ((props: React.ComponentPropsWithRef<'button'>, state: ButtonState) => React.ReactElement);
@@ -65,11 +64,12 @@ Button _styling_, not Button semantics. Use the exported `buttonVariants` direct
 
 Applies to `primary`, `outline`, `ghost`. Radius is `4px` for every size and variant.
 
-| Size   | Height | Padding   | Type step        | Icon box | Gap | Min content width | Icon-only box |
-| ------ | ------ | --------- | ---------------- | -------- | --- | ----------------- | ------------- |
-| Large  | 40px   | `8px`     | Subtitle (16/24) | 18px     | 4px | 90px              | 40 × 40       |
-| Medium | 36px   | `7px 8px` | Body (14/22)     | 16px     | 4px | 82px              | 36 × 36       |
-| Small  | 24px   | `3px 4px` | Caption (12/18)  | 14px     | 4px | 54px              | 24 × 24       |
+| Size | Height | Padding | Type step | Icon box | Gap | Min content width | Icon-only box |
+| Size | Height | Padding | Type step | Icon box | Gap | Min content width |
+| ------ | ------ | --------- | ---------------- | -------- | --- | ------------------ |
+| Large | 40px | `8px` | Subtitle (16/24) | 18px | 4px | 90px |
+| Medium | 36px | `7px 8px` | Body (14/22) | 16px | 4px | 82px |
+| Small | 24px | `3px 4px` | Caption (12/18) | 14px | 4px | 54px |
 
 ## Typography
 

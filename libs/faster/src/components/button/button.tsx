@@ -81,10 +81,6 @@ export const buttonVariants = cva(
         medium: 'h-9 px-2',
         small: 'h-6 px-1',
       },
-      iconOnly: {
-        true: 'aspect-square px-0',
-        false: '',
-      },
     },
     compoundVariants: [
       { variant: 'link', size: 'large', class: 'h-6' },
@@ -94,7 +90,6 @@ export const buttonVariants = cva(
     defaultVariants: {
       variant: 'primary',
       size: 'large',
-      iconOnly: false,
     },
   },
 );
@@ -152,8 +147,6 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
-  /** Uses the square icon-only dimensions from Figma. Not supported with `variant="link"`. */
-  iconOnly?: boolean;
   /** Element composition: a `ReactElement` or a `(props, state) => ReactElement`. */
   render?: Render;
   /** Whether the rendered element is a native `<button>`. Set to `false` when `render` isn't a button. */
@@ -163,7 +156,6 @@ export interface ButtonProps
 export function Button({
   variant = 'primary',
   size = 'large',
-  iconOnly = false,
   leftIcon,
   rightIcon,
   render,
@@ -178,10 +170,7 @@ export function Button({
   const isLink = variant === 'link';
   const state: ButtonState = { disabled: isDisabled };
 
-  const rootClassName = cn(
-    buttonVariants({ variant, size, iconOnly }),
-    className,
-  );
+  const rootClassName = cn(buttonVariants({ variant, size }), className);
 
   const rootProps: RenderProps = {
     ...props,
@@ -191,9 +180,7 @@ export function Button({
     ...(nativeButton ? { type } : {}),
   };
 
-  const content = iconOnly ? (
-    children
-  ) : (
+  const content = (
     <span className={cn(buttonContentVariants({ size, isLink }))}>
       {leftIcon && (
         <span aria-hidden className={cn(buttonIconVariants({ size }))}>

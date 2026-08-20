@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button, buttonVariants } from './button';
 import { expect, fn, userEvent } from 'storybook/test';
 
+import { iconOptions, iconMapping } from '#/icons/registry';
 import { PlusIcon } from '#/icons/plus';
 
 const meta = {
@@ -12,6 +13,7 @@ const meta = {
     onClick: fn(),
   },
   argTypes: {
+    children: { control: 'text' },
     variant: {
       control: 'select',
       options: ['primary', 'outline', 'ghost', 'link'],
@@ -20,8 +22,16 @@ const meta = {
       control: 'select',
       options: ['large', 'medium', 'small'],
     },
-    iconOnly: { control: 'boolean' },
     disabled: { control: 'boolean' },
+    leftIcon: { control: 'select', options: iconOptions, mapping: iconMapping },
+    rightIcon: {
+      control: 'select',
+      options: iconOptions,
+      mapping: iconMapping,
+    },
+    render: { control: false },
+    nativeButton: { control: false },
+    className: { control: false },
   },
 } satisfies Meta<typeof Button>;
 export default meta;
@@ -65,14 +75,6 @@ export const WithIcons = {
   args: {
     leftIcon: <PlusIcon />,
     children: 'Add item',
-  },
-} satisfies Story;
-
-export const IconOnly = {
-  args: {
-    iconOnly: true,
-    'aria-label': 'Add item',
-    children: <PlusIcon />,
   },
 } satisfies Story;
 
