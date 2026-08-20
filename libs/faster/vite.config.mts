@@ -7,6 +7,11 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/faster',
+  resolve: {
+    alias: {
+      '#': path.resolve(import.meta.dirname, 'src'),
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

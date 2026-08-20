@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Button, buttonVariants } from './button';
 import { expect, fn, userEvent } from 'storybook/test';
 
+import { PlusIcon } from '#/icons/plus';
+
 const meta = {
   component: Button,
   title: 'Button',
@@ -96,11 +98,3 @@ export const AsAnchorViaButtonVariants = {
     </a>
   ),
 } satisfies Story;
-
-function PlusIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-    </svg>
-  );
-}

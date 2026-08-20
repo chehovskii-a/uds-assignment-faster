@@ -202,8 +202,10 @@ const dialogContentVariants = cva(
   },
 );
 
-export interface DialogContentProps extends ComponentPropsWithoutRef<'dialog'> {
+export interface DialogContentProps
+  extends Omit<ComponentPropsWithoutRef<'dialog'>, 'closedby'> {
   size?: DialogSize;
+  closedby?: 'any' | 'closerequest';
 }
 
 function DialogContent({

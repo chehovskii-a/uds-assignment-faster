@@ -1,30 +1,46 @@
 import {
   cloneElement,
-  useId,
-  useState,
-  type ChangeEvent,
+  createContext,
+  use,
+  useRef,
+  type ComponentPropsWithoutRef,
   type ComponentPropsWithRef,
-  type FocusEvent,
   type ReactElement,
-  type ReactNode,
+  type RefObject,
 } from 'react';
 import { cva } from 'class-variance-authority';
 import { cn } from '#/utils/cn';
+import { mergeRefs } from '#/utils/mergeRef';
+import { ClearIcon } from '#/icons/clear';
 
 export type InputSize = 'large' | 'medium' | 'small';
 
-export interface InputState {
-  disabled: boolean;
+interface InputContextValue {
+  size: InputSize;
   invalid: boolean;
-  filled: boolean;
-  focused: boolean;
+  disabled: boolean;
+  controlRef: RefObject<HTMLInputElement | null>;
+}
+
+const InputContext = createContext<InputContextValue>({
+  size: 'large',
+  invalid: false,
+  disabled: false,
+  controlRef: { current: null },
+});
+
+function useInputContext() {
+  const context = use(InputContext);
+  if (!context) {
+    throw new Error('Input components must be used within an Input.Root');
+  }
+  return context;
 }
 
 type RenderProps = ComponentPropsWithRef<'input'>;
-type RenderElement = ReactElement<RenderProps>;
 type Render =
-  | RenderElement
-  | ((props: RenderProps, state: InputState) => RenderElement);
+  | ReactElement<RenderProps>
+  | ((props: RenderProps) => ReactElement<RenderProps>);
 
 const inputRootVariants = cva(
   [
@@ -40,9 +56,9 @@ const inputRootVariants = cva(
   {
     variants: {
       size: {
-        large: 'h-10',
-        medium: 'h-9',
-        small: 'h-6',
+        large: 'h-10 gap-2 px-3',
+        medium: 'h-9 gap-2 px-3',
+        small: 'h-6 gap-1 px-2',
       },
       invalid: {
         true: '',
@@ -54,7 +70,6 @@ const inputRootVariants = cva(
       },
     },
     compoundVariants: [
-      // Default → Hover → Focus, only when neither invalid nor disabled.
       {
         invalid: false,
         disabled: false,
@@ -64,14 +79,12 @@ const inputRootVariants = cva(
           'focus-within:shadow-[0_0_1px_1px_rgba(21,197,206,0.16)]',
         ],
       },
-      // Invalid wins over hover/focus, but not over disabled.
       {
         invalid: true,
         disabled: false,
         class:
           'border-danger-600 hover:border-danger-600 focus-within:border-danger-600 focus-within:shadow-none',
       },
-      // Disabled wins over everything.
       {
         disabled: true,
         class:
@@ -85,6 +98,41 @@ const inputRootVariants = cva(
     },
   },
 );
+
+export interface InputRootProps extends ComponentPropsWithoutRef<'div'> {
+  size?: InputSize;
+  /** Also read by `Input.Control` to set `aria-invalid`. */
+  invalid?: boolean;
+  /** Also read by `Input.Control` as its default `disabled`. */
+  disabled?: boolean;
+}
+
+function InputRoot({
+  size = 'large',
+  invalid = false,
+  disabled = false,
+  className,
+  children,
+  ...props
+}: InputRootProps) {
+  const controlRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <InputContext.Provider value={{ size, invalid, disabled, controlRef }}>
+      <div
+        data-invalid={invalid || undefined}
+        data-disabled={disabled || undefined}
+        className={cn(
+          inputRootVariants({ size, invalid, disabled }),
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </div>
+    </InputContext.Provider>
+  );
+}
 
 const inputControlVariants = cva(
   [
@@ -113,346 +161,211 @@ const inputControlVariants = cva(
   },
 );
 
-const inputIconVariants = cva(
-  [
-    'inline-flex',
-    'shrink-0',
-    'items-center',
-    'justify-center',
-    '[&>svg]:size-full',
-  ],
-  {
-    variants: {
-      size: {
-        large: 'w-4.5 h-4.5',
-        medium: 'w-4 h-4',
-        small: 'w-3.5 h-3.5',
-      },
-    },
-    defaultVariants: {
-      size: 'large',
-    },
-  },
-);
-
-const inputClearVariants = cva(
-  [
-    'inline-flex',
-    'shrink-0',
-    'cursor-pointer',
-    'items-center',
-    'justify-center',
-    '[&>svg]:size-full',
-  ],
-  {
-    variants: {
-      size: {
-        large: 'w-4 h-4',
-        medium: 'w-3.5 h-3.5',
-        small: 'w-3 h-3',
-      },
-    },
-    defaultVariants: {
-      size: 'large',
-    },
-  },
-);
-
-const inputAffixVariants = cva(
-  [
-    'inline-flex',
-    'h-full',
-    'shrink-0',
-    'items-center',
-    'font-regular',
-    'text-neutral-500',
-  ],
-  {
-    variants: {
-      size: {
-        large: 'text-subtitle py-2 px-3',
-        medium: 'text-body py-[7px] px-3',
-        small: 'text-caption py-[3px] px-2',
-      },
-    },
-    defaultVariants: {
-      size: 'large',
-    },
-  },
-);
-
-// Structural row geometry: edge-padding + icon box + gap reproduces the Figma text-left/text-right
-// offsets exactly (e.g. large: 12 + 18 + 8 = 38px) instead of hardcoding that 38px directly. When an
-// affix occupies an edge, its own inner padding supplies the equivalent spacing, so the row omits its
-// edge padding on that side.
-const ROW_GAP: Record<InputSize, string> = {
-  large: 'gap-2',
-  medium: 'gap-2',
-  small: 'gap-1',
-};
-const ROW_EDGE_PADDING: Record<InputSize, { start: string; end: string }> = {
-  large: { start: 'pl-3', end: 'pr-3' },
-  medium: { start: 'pl-3', end: 'pr-3' },
-  small: { start: 'pl-2', end: 'pr-2' },
-};
-
-const helpTextVariants = cva(['mt-1'], {
-  variants: {
-    size: {
-      large: 'text-body font-regular',
-      medium: 'text-body font-regular',
-      small: 'text-caption font-regular',
-    },
-    invalid: {
-      true: 'text-danger-600',
-      false: 'text-neutral-500',
-    },
-  },
-  defaultVariants: {
-    size: 'large',
-    invalid: false,
-  },
-});
-
-// Only one end adornment is design-specified at a time; warn in development so
-// unsupported combinations are caught early rather than silently overlapping.
-function warnOnUnsupportedAdornments(props: {
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
-  prefix?: ReactNode;
-  suffix?: ReactNode;
-  clearable?: boolean;
-}) {
-  if (
-    typeof process !== 'undefined' &&
-    process.env?.['NODE_ENV'] === 'production'
-  ) {
-    return;
-  }
-
-  const endAdornments = [
-    props.rightIcon && 'rightIcon',
-    props.suffix && 'suffix',
-    props.clearable && 'clearable',
-  ].filter(Boolean);
-
-  if (endAdornments.length > 1) {
-    console.warn(
-      `Input: only one end adornment is design-specified at a time, got [${endAdornments.join(', ')}].`,
-    );
-  }
-
-  if ((props.leftIcon && props.prefix) || (props.rightIcon && props.suffix)) {
-    console.warn(
-      'Input: icons and affixes are not combined in the design on the same side.',
-    );
-  }
-}
-
-export interface InputProps
-  extends Omit<ComponentPropsWithRef<'input'>, 'size' | 'prefix'> {
-  size?: InputSize;
-  /** Marks the field invalid. Also sets `aria-invalid`. */
-  invalid?: boolean;
-  /** Optional supporting/error message rendered below the field. */
-  helpText?: ReactNode;
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
-  prefix?: ReactNode;
-  suffix?: ReactNode;
-  /** Shows a clear control while focused and non-empty. */
-  clearable?: boolean;
-  /** Caller-supplied clear glyph. */
-  clearIcon?: ReactNode;
-  /** Accessible label for the clear control. @default "Clear input" */
-  clearLabel?: string;
-  /** Called whenever the textual value changes. */
-  onValueChange?: (value: string) => void;
-  /** Called when the clear control is activated. */
-  onClear?: () => void;
+export interface InputControlProps
+  extends Omit<ComponentPropsWithRef<'input'>, 'size'> {
   /** Element composition of the actual `<input>`. */
   render?: Render;
-  /** Styles the visual field shell (the bordered box), as opposed to `className`, which targets the `<input>`. */
-  rootClassName?: string;
 }
 
-export function Input({
-  size = 'large',
-  invalid = false,
-  helpText,
-  leftIcon,
-  rightIcon,
-  prefix,
-  suffix,
-  clearable = false,
-  clearIcon,
-  clearLabel = 'Clear input',
-  onValueChange,
-  onClear,
+function InputControl({
   render,
-  rootClassName,
   className,
   disabled,
-  value,
-  defaultValue,
-  onChange,
-  onFocus,
-  onBlur,
-  'aria-describedby': ariaDescribedBy,
+  ref,
   ...props
-}: InputProps) {
-  warnOnUnsupportedAdornments({
-    leftIcon,
-    rightIcon,
-    prefix,
-    suffix,
-    clearable,
-  });
-
-  const isDisabled = Boolean(disabled);
-  const isControlled = value !== undefined;
-  const [uncontrolledValue, setUncontrolledValue] = useState(
-    defaultValue ?? '',
-  );
-  const currentValue = isControlled ? value : uncontrolledValue;
-  const [focused, setFocused] = useState(false);
-  const filled =
-    currentValue !== undefined &&
-    currentValue !== null &&
-    String(currentValue).length > 0;
-
-  const helpTextId = useId();
-  const describedBy = helpText
-    ? [ariaDescribedBy, helpTextId].filter(Boolean).join(' ')
-    : ariaDescribedBy;
-
-  const state: InputState = { disabled: isDisabled, invalid, filled, focused };
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (!isControlled) {
-      setUncontrolledValue(event.target.value);
-    }
-    onChange?.(event);
-    onValueChange?.(event.target.value);
-  };
-
-  const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
-    setFocused(true);
-    onFocus?.(event);
-  };
-
-  const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
-    setFocused(false);
-    onBlur?.(event);
-  };
-
-  const handleClear = () => {
-    if (!isControlled) {
-      setUncontrolledValue('');
-    }
-    onValueChange?.('');
-    onClear?.();
-  };
-
-  const showClear = clearable && focused && filled && !isDisabled;
-
-  const controlClassName = cn(inputControlVariants({ size }), className);
-
-  // Internally always controlled (via `currentValue`) so `onClear` can reset the field even in the
-  // caller-uncontrolled case — an uncontrolled native `<input>` can't be cleared by re-rendering alone.
+}: InputControlProps) {
+  const {
+    size,
+    invalid,
+    disabled: rootDisabled,
+    controlRef,
+  } = useInputContext();
   const controlProps: RenderProps = {
     ...props,
-    value: currentValue,
-    disabled: isDisabled,
-    className: controlClassName,
+    ref: mergeRefs(controlRef, ref),
+    disabled: disabled ?? rootDisabled,
     'aria-invalid': invalid || undefined,
-    'aria-describedby': describedBy,
-    onChange: handleChange,
-    onFocus: handleFocus,
-    onBlur: handleBlur,
+    className: cn(inputControlVariants({ size }), 'peer', className),
   };
 
-  const control =
-    typeof render === 'function' ? (
-      render(controlProps, state)
-    ) : render ? (
-      cloneElement(render, controlProps)
-    ) : (
-      <input {...controlProps} />
-    );
+  if (typeof render === 'function') {
+    return render(controlProps);
+  }
+  if (render) {
+    return cloneElement(render, controlProps);
+  }
+  return <input {...controlProps} />;
+}
 
-  const edge = ROW_EDGE_PADDING[size];
-  const hasStartAdornment = Boolean(prefix || leftIcon);
-  const endAdornment = showClear
-    ? 'clear'
-    : suffix
-      ? 'suffix'
-      : rightIcon
-        ? 'icon'
-        : null;
+const inputAdornmentVariants = cva(
+  ['inline-flex', 'shrink-0', 'items-center', 'justify-center', 'font-regular'],
+  {
+    variants: {
+      size: {
+        large: 'text-subtitle',
+        medium: 'text-body',
+        small: 'text-caption',
+      },
+      chip: {
+        true: 'h-full rounded-[4px] bg-neutral-50 text-neutral-500',
+        false: '[&>svg]:size-full text-neutral-500',
+      },
+      side: {
+        start: '',
+        end: '',
+      },
+    },
+    compoundVariants: [
+      { chip: false, size: 'large', class: 'h-4.5 w-4.5' },
+      { chip: false, size: 'medium', class: 'h-4 w-4' },
+      { chip: false, size: 'small', class: 'h-3.5 w-3.5' },
+      {
+        chip: true,
+        side: 'start',
+        size: 'large',
+        class: '-ml-3 px-3 rounded-r-none',
+      },
+      {
+        chip: true,
+        side: 'start',
+        size: 'medium',
+        class: '-ml-3 px-3 rounded-r-none',
+      },
+      {
+        chip: true,
+        side: 'start',
+        size: 'small',
+        class: '-ml-2 px-2 rounded-r-none',
+      },
+      {
+        chip: true,
+        side: 'end',
+        size: 'large',
+        class: '-mr-3 px-3 rounded-l-none',
+      },
+      {
+        chip: true,
+        side: 'end',
+        size: 'medium',
+        class: '-mr-3 px-3 rounded-l-none',
+      },
+      {
+        chip: true,
+        side: 'end',
+        size: 'small',
+        class: '-mr-2 px-2 rounded-l-none',
+      },
+    ],
+    defaultVariants: {
+      size: 'large',
+      chip: false,
+      side: 'start',
+    },
+  },
+);
 
+export interface InputAdornmentProps extends ComponentPropsWithoutRef<'span'> {
+  side: 'start' | 'end';
+  /** Renders the adornment as a shaded pill, for prefix/suffix content. */
+  chip?: boolean;
+}
+
+function InputAdornment({
+  side,
+  chip = false,
+  className,
+  ...props
+}: InputAdornmentProps) {
+  const { size } = useInputContext();
   return (
-    <div>
-      <div
-        data-disabled={isDisabled || undefined}
-        data-invalid={invalid || undefined}
-        data-filled={filled || undefined}
-        data-focused={focused || undefined}
-        className={cn(
-          inputRootVariants({ size, invalid, disabled: isDisabled }),
-          rootClassName,
-        )}
-      >
-        {prefix && (
-          <span className={cn(inputAffixVariants({ size }))}>{prefix}</span>
-        )}
-        {leftIcon && !prefix && (
-          <span
-            aria-hidden
-            className={cn(edge.start, inputIconVariants({ size }))}
-          >
-            {leftIcon}
-          </span>
-        )}
-        <div
-          className={cn(
-            'flex min-w-0 flex-1 items-center',
-            ROW_GAP[size],
-            !hasStartAdornment && edge.start,
-            !endAdornment && edge.end,
-          )}
-        >
-          {control}
-        </div>
-        {endAdornment === 'clear' && (
-          <button
-            type="button"
-            aria-label={clearLabel}
-            onClick={handleClear}
-            className={cn(edge.end, inputClearVariants({ size }))}
-          >
-            {clearIcon}
-          </button>
-        )}
-        {endAdornment === 'icon' && (
-          <span
-            aria-hidden
-            className={cn(edge.end, inputIconVariants({ size }))}
-          >
-            {rightIcon}
-          </span>
-        )}
-        {endAdornment === 'suffix' && (
-          <span className={cn(inputAffixVariants({ size }))}>{suffix}</span>
-        )}
-      </div>
-      {helpText && (
-        <p id={helpTextId} className={cn(helpTextVariants({ size, invalid }))}>
-          {helpText}
-        </p>
-      )}
-    </div>
+    <span
+      data-side={side}
+      className={cn(inputAdornmentVariants({ size, chip, side }), className)}
+      {...props}
+    />
   );
 }
+
+export interface InputClearProps extends ComponentPropsWithoutRef<'button'> {
+  /** Accessible label for the clear control. @default "Clear input" */
+  label?: string;
+}
+
+function resetControlValue(control: HTMLInputElement) {
+  const setValue = Object.getOwnPropertyDescriptor(
+    window.HTMLInputElement.prototype,
+    'value',
+  )?.set;
+  setValue?.call(control, '');
+  control.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function InputClear({
+  label = 'Clear input',
+  className,
+  onClick,
+  children,
+  ...props
+}: InputClearProps) {
+  const { size, controlRef } = useInputContext();
+
+  function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
+    const control = controlRef.current;
+    if (control) {
+      resetControlValue(control);
+      control.focus();
+    }
+    onClick?.(event);
+  }
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={handleClick}
+      className={cn(
+        inputAdornmentVariants({ size, chip: false, side: 'end' }),
+        'hidden cursor-pointer text-neutral-400 hover:text-neutral-500 active:text-neutral-600 peer-[&:focus:not(:placeholder-shown)]:inline-flex',
+        className,
+      )}
+      {...props}
+    >
+      {children ?? <ClearIcon />}
+    </button>
+  );
+}
+
+export type InputHelpProps = ComponentPropsWithoutRef<'p'>;
+
+function InputHelp({ className, ...props }: InputHelpProps) {
+  return (
+    <p
+      className={cn('mt-1 text-body font-regular text-neutral-500', className)}
+      {...props}
+    />
+  );
+}
+
+export type InputErrorProps = ComponentPropsWithoutRef<'p'>;
+
+function InputError({ className, ...props }: InputErrorProps) {
+  return (
+    <p
+      role="alert"
+      className={cn('mt-1 text-body font-regular text-danger-600', className)}
+      {...props}
+    />
+  );
+}
+
+export const Input = {
+  Root: InputRoot,
+  Control: InputControl,
+  Adornment: InputAdornment,
+  Clear: InputClear,
+  Help: InputHelp,
+  Error: InputError,
+};
 
 export default Input;

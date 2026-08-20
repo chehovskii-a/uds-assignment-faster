@@ -1,15 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Input } from './input';
-import { expect, fn, userEvent } from 'storybook/test';
+import { expect, userEvent } from 'storybook/test';
+
+import { SearchIcon } from '#/icons/search';
 
 const meta = {
-  component: Input,
+  component: Input.Root,
   title: 'Input',
-  args: {
-    placeholder: 'Placeholder',
-    onValueChange: fn(),
-    onClear: fn(),
-  },
   argTypes: {
     size: {
       control: 'select',
@@ -17,88 +14,171 @@ const meta = {
     },
     invalid: { control: 'boolean' },
     disabled: { control: 'boolean' },
-    clearable: { control: 'boolean' },
-    helpText: { control: 'text' },
   },
-} satisfies Meta<typeof Input>;
+} satisfies Meta<typeof Input.Root>;
 export default meta;
 
-type Story = StoryObj<typeof Input>;
+type Story = StoryObj<typeof Input.Root>;
 
 export const Playground = {
-  args: {
-    size: 'large',
-  },
+  args: { size: 'large' },
+  render: (args) => (
+    <Input.Root {...args}>
+      <Input.Control placeholder="Placeholder" />
+    </Input.Root>
+  ),
 } satisfies Story;
 
 export const Sizes = {
   render: (args) => (
     <div className="flex w-64 flex-col gap-2">
-      <Input {...args} size="large" />
-      <Input {...args} size="medium" />
-      <Input {...args} size="small" />
+      <Input.Root {...args} size="large">
+        <Input.Control placeholder="Large" />
+      </Input.Root>
+      <Input.Root {...args} size="medium">
+        <Input.Control placeholder="Medium" />
+      </Input.Root>
+      <Input.Root {...args} size="small">
+        <Input.Control placeholder="Small" />
+      </Input.Root>
     </div>
   ),
 } satisfies Story;
 
 export const WithLeftIcon = {
-  args: { leftIcon: <SearchIcon />, placeholder: 'Search' },
+  render: (args) => (
+    <Input.Root {...args}>
+      <Input.Adornment side="start">
+        <SearchIcon />
+      </Input.Adornment>
+      <Input.Control placeholder="Search" />
+    </Input.Root>
+  ),
 } satisfies Story;
 
 export const WithRightIcon = {
-  args: { rightIcon: <SearchIcon />, placeholder: 'Search' },
+  render: (args) => (
+    <Input.Root {...args}>
+      <Input.Control placeholder="Search" />
+      <Input.Adornment side="end">
+        <SearchIcon />
+      </Input.Adornment>
+    </Input.Root>
+  ),
 } satisfies Story;
 
 export const WithPrefix = {
-  args: { prefix: '$', placeholder: '0.00' },
+  render: (args) => (
+    <Input.Root {...args}>
+      <Input.Adornment side="start" chip>
+        $
+      </Input.Adornment>
+      <Input.Control placeholder="0.00" />
+    </Input.Root>
+  ),
 } satisfies Story;
 
 export const WithSuffix = {
-  args: { suffix: 'USD', placeholder: '0.00' },
+  render: (args) => (
+    <Input.Root {...args}>
+      <Input.Control placeholder="0.00" />
+      <Input.Adornment side="end" chip>
+        USD
+      </Input.Adornment>
+    </Input.Root>
+  ),
+} satisfies Story;
+
+export const NumberVariant = {
+  render: (args) => (
+    <Input.Root {...args}>
+      <Input.Control type="number" placeholder="0" />
+    </Input.Root>
+  ),
 } satisfies Story;
 
 export const Clearable = {
-  args: { clearable: true, clearIcon: <CircleXIcon />, placeholder: 'Search', defaultValue: 'hello' },
+  render: (args) => (
+    <Input.Root {...args}>
+      <Input.Control placeholder="Search" defaultValue="hello" />
+      <Input.Clear />
+    </Input.Root>
+  ),
   play: async ({ canvas }) => {
     const input = canvas.getByPlaceholderText('Search');
+    const clearButton = canvas.getByRole('button', { name: 'Clear input' });
+    await expect(clearButton).not.toBeVisible();
+
     await userEvent.click(input);
-    await expect(canvas.getByRole('button', { name: 'Clear input' })).toBeTruthy();
+    await expect(clearButton).toBeVisible();
   },
+} satisfies Story;
+
+export const ClearableWithSuffix = {
+  render: (args) => (
+    <Input.Root {...args}>
+      <Input.Control placeholder="Amount" defaultValue="10" />
+      <Input.Clear />
+      <Input.Adornment side="end" chip>
+        USD
+      </Input.Adornment>
+    </Input.Root>
+  ),
+} satisfies Story;
+
+export const PrefixAndLeftIcon = {
+  render: (args) => (
+    <Input.Root {...args}>
+      <Input.Adornment side="start" chip>
+        $
+      </Input.Adornment>
+      <Input.Adornment side="start">
+        <SearchIcon />
+      </Input.Adornment>
+      <Input.Control placeholder="0.00" />
+    </Input.Root>
+  ),
 } satisfies Story;
 
 export const Invalid = {
-  args: { invalid: true, helpText: 'This field is required', placeholder: 'Email' },
+  render: (args) => (
+    <div className="flex w-64 flex-col">
+      <Input.Root {...args} invalid>
+        <Input.Control placeholder="Email" aria-describedby="invalid-error" />
+      </Input.Root>
+      <Input.Error id="invalid-error">This field is required</Input.Error>
+    </div>
+  ),
 } satisfies Story;
 
 export const Disabled = {
-  args: { disabled: true, defaultValue: 'Disabled value' },
+  render: (args) => (
+    <Input.Root {...args} disabled>
+      <Input.Control placeholder="Search" defaultValue="Disabled value" />
+    </Input.Root>
+  ),
 } satisfies Story;
 
 export const HelpText = {
-  args: { helpText: 'We will never share your email.', placeholder: 'Email' },
+  render: (args) => (
+    <div className="flex w-64 flex-col">
+      <Input.Root {...args}>
+        <Input.Control placeholder="Email" aria-describedby="help-hint" />
+      </Input.Root>
+      <Input.Help id="help-hint">We will never share your email.</Input.Help>
+    </div>
+  ),
 } satisfies Story;
 
-export const ValueChangeInteraction = {
-  args: { placeholder: 'Type here' },
-  play: async ({ args, canvas }) => {
-    await userEvent.type(canvas.getByPlaceholderText('Type here'), 'hello');
-    await expect(args.onValueChange).toHaveBeenCalledWith('hello');
+export const TypingInteraction = {
+  render: (args) => (
+    <Input.Root {...args}>
+      <Input.Control placeholder="Type here" />
+    </Input.Root>
+  ),
+  play: async ({ canvas }) => {
+    const input = canvas.getByPlaceholderText('Type here') as HTMLInputElement;
+    await userEvent.type(input, 'hello');
+    await expect(input.value).toBe('hello');
   },
 } satisfies Story;
-
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-      <circle cx="11" cy="11" r="7" />
-      <path d="M21 21l-4.35-4.35" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CircleXIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm3.5 12.09-1.41 1.41L12 13.41l-2.09 2.09-1.41-1.41L10.59 12l-2.09-2.09 1.41-1.41L12 10.59l2.09-2.09 1.41 1.41L13.41 12l2.09 2.09z" />
-    </svg>
-  );
-}

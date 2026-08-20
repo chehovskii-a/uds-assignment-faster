@@ -25,6 +25,10 @@
       "default": "./dist/index.js"
     }
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
+  },
   "nx": {
     "tags": [
       "scope:shared",

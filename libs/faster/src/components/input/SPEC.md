@@ -6,240 +6,264 @@ File: `lXoWsgMekR00jKGtXIffk0` · Page node: `11:7661`
 The Input page is split into seven sibling pages, one per composition. Each page contains one
 component set.
 
-| Composition | Page node | Component set | Variant axes |
-| --- | --- | --- | --- |
-| Basic | `11:7673` | `11:7949` | Size × State × Typing × Text Entered × State 2 |
-| Left icon | `11:8260` | `11:8536` | Size × State × Typing × Text Entered × State 2 |
-| Right icon | `11:8913` | `11:9189` | Size × State × Typing × Text Entered × State 2 |
-| Number (stepper) | `11:9533` | `11:9747` | Size × State × Text Entered |
-| Prefix & Suffix | `11:10115` | `11:10328` | Size × State × Text Entered |
-| Prefix only | `11:10732` | `11:10945` | Size × State × Text Entered |
-| Suffix only | `11:11310` | `11:11523` | Size × State × Text Entered |
+| Composition      | Page node  | Component set | Variant axes                                   |
+| ---------------- | ---------- | ------------- | ---------------------------------------------- |
+| Basic            | `11:7673`  | `11:7949`     | Size × State × Typing × Text Entered × State 2 |
+| Left icon        | `11:8260`  | `11:8536`     | Size × State × Typing × Text Entered × State 2 |
+| Right icon       | `11:8913`  | `11:9189`     | Size × State × Typing × Text Entered × State 2 |
+| Number (stepper) | `11:9533`  | `11:9747`     | Size × State × Text Entered                    |
+| Prefix & Suffix  | `11:10115` | `11:10328`    | Size × State × Text Entered                    |
+| Prefix only      | `11:10732` | `11:10945`    | Size × State × Text Entered                    |
+| Suffix only      | `11:11310` | `11:11523`    | Size × State × Text Entered                    |
 
 ## Variant axes → code mapping
 
-| Figma axis | Values | In code |
-| --- | --- | --- |
-| `Size` | Large / Medium / Small | `size` prop |
-| `State` | Default / Hover / Pressed & Focus / Disabled / Error | shell `:hover`, `:focus-within`, native `disabled`, `invalid` prop |
-| `Text Entered` | False / True | derived from value → `filled` state |
-| `Typing` | False / True | derived from `focused && value` → not a prop |
-| `State 2` | Not Applicable / Clear Hover / Clear Pressed | clear-button `:hover` / `:active` |
+| Figma axis     | Values                                               | In code                                                             |
+| -------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| `Size`         | Large / Medium / Small                               | `Input.Root` `size` prop                                            |
+| `State`        | Default / Hover / Pressed & Focus / Disabled / Error | shell `:hover`, `:focus-within`, `disabled`, `Input.Root` `invalid` |
+| `Text Entered` | False / True                                         | plain `<input>` value; not tracked by the component                 |
+| `Typing`       | False / True                                         | CSS `:focus-within`; not tracked by the component                   |
+| `State 2`      | Not Applicable / Clear Hover / Clear Pressed         | caller-composed clear button, styled with `hover:`/`active:`        |
 
 ## Public API
 
+`Input` is a namespace of compound components composed by the caller — there is no single `<Input>`
+component and no internal state (no `useState` for value/focus/clear-visibility). Styling and
+behavior each live in exactly one place: `Input.Root` owns the field shell, `Input.Control` is the
+plain native `<input>` (or a composed custom control via `render`), `Input.Adornment` renders icons
+or prefix/suffix chips on either side, and `Input.Help`/`Input.Error` render supporting text below
+the field.
+
 ```tsx
-<Input name="search" placeholder="Search" size="large" />
-<Input leftIcon={<SearchIcon />} placeholder="Search" />
-<Input invalid helpText="This field is required" placeholder="Email" />
-<Input prefix="$" placeholder="0.00" />
-<Input clearable clearIcon={<CircleXIcon />} placeholder="Search" />
+<Input.Root>
+  <Input.Control placeholder="Search" />
+</Input.Root>
+
+<Input.Root>
+  <Input.Adornment side="start"><SearchIcon /></Input.Adornment>
+  <Input.Control placeholder="Search" />
+</Input.Root>
+
+<Input.Root invalid>
+  <Input.Control placeholder="Email" aria-describedby="email-error" />
+  <Input.Error id="email-error">This field is required</Input.Error>
+</Input.Root>
+
+<Input.Root>
+  <Input.Adornment side="start" chip>$</Input.Adornment>
+  <Input.Control placeholder="0.00" />
+</Input.Root>
+
+<Input.Root>
+  <Input.Control placeholder="0.00" />
+  <Input.Adornment side="end" chip>USD</Input.Adornment>
+</Input.Root>
+
+<Input.Root>
+  <Input.Control type="number" placeholder="0" />
+</Input.Root>
+
+<Input.Root>
+  <Input.Control placeholder="Search" />
+  <Input.Adornment side="end">
+    <Input.Clear />
+  </Input.Adornment>
+</Input.Root>
 ```
 
 ```ts
 type InputSize = 'large' | 'medium' | 'small';
 
-interface InputState {
-  disabled: boolean;
-  invalid: boolean;
-  filled: boolean;
-  focused: boolean;
+interface InputRootProps extends React.ComponentPropsWithoutRef<'div'> {
+  size?: InputSize; // default 'large'
+  invalid?: boolean; // renamed from the Figma "error" axis; propagates aria-invalid to Input.Control
+  disabled?: boolean; // default disabled state for Input.Control
 }
 
-interface InputProps extends Omit<React.ComponentPropsWithoutRef<'input'>, 'size' | 'prefix'> {
-  size?: InputSize;              // default 'large'
-  invalid?: boolean;             // renamed from the Figma "error" axis; also sets aria-invalid
-  helpText?: React.ReactNode;    // rendered below the field, wired to aria-describedby
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  prefix?: React.ReactNode;
-  suffix?: React.ReactNode;
-  clearable?: boolean;           // shows a clear control while focused and non-empty
-  clearIcon?: React.ReactNode;   // caller-supplied glyph, not hardcoded
-  clearLabel?: string;           // accessible label for the clear control; default "Clear input"
-  onValueChange?: (value: string) => void;
-  onClear?: () => void;
-
-  /** Base UI-style composition of the actual `<input>` (not the visual shell). */
-  render?:
-    | React.ReactElement
-    | ((props: React.ComponentPropsWithoutRef<'input'>, state: InputState) => React.ReactElement);
-
-  /** Styles the visual field shell. `className` still targets the native `<input>`. */
-  rootClassName?: string;
+interface InputControlProps extends Omit<React.ComponentPropsWithRef<'input'>, 'size'> {
+  disabled?: boolean; // overrides Input.Root's disabled for this control
+  /** Composition of the actual `<input>`. */
+  render?: React.ReactElement | ((props: React.ComponentPropsWithRef<'input'>) => React.ReactElement);
 }
+
+interface InputAdornmentProps extends React.ComponentPropsWithoutRef<'span'> {
+  side: 'start' | 'end';
+  chip?: boolean; // shades the adornment as a prefix/suffix pill instead of a bare icon box
+}
+
+interface InputClearProps extends React.ComponentPropsWithoutRef<'button'> {
+  label?: string; // accessible label; default "Clear input"
+}
+
+type InputHelpProps = React.ComponentPropsWithoutRef<'p'>;
+type InputErrorProps = React.ComponentPropsWithoutRef<'p'>; // role="alert"
 ```
 
-### `className` vs `rootClassName`
+### Why compound components
 
-Because `InputProps` otherwise behaves like native `<input>` props, `className` (and `style`,
-`onFocus`, `onChange`, `aria-*`, `ref`, …) target the **actual `<input>`**, exactly like plain HTML.
-`rootClassName` is the one addition — it targets the bordered visual shell:
+The previous single `<Input>` accepted `leftIcon`/`rightIcon`/`prefix`/`suffix`/`clearable`/`variant`
+props and derived `filled`/`focused`/adornment stacking internally. That pushed all combinatorics
+(which adornments coexist, chip vs. plain styling, clear-button visibility) into one component's
+logic. The compound API moves each concern to its own component:
 
-```tsx
-<Input className="..." rootClassName="..." />
-```
+- `Input.Root` only owns the shell's visual state (`size`, `invalid`, `disabled`) via context —
+  no value tracking, no focus tracking.
+- `Input.Control` is a plain `<input>` (or `render`-composed control) that reads `size`/`invalid`
+  from context; consumers wire `value`/`onChange` themselves, same as any native input.
+- `Input.Adornment side="start" | "end"` replaces `leftIcon`/`rightIcon`/`prefix`/`suffix`/`variant`.
+  Multiple adornments per side are just multiple `<Input.Adornment>` children — no internal stacking
+  logic. `chip` replaces the `variant="prefix" | "postfix"` axis.
+- `Input.Clear` is a built-in end adornment: its visibility is pure CSS (a Tailwind `peer` selector
+  reading `Input.Control`'s `:focus`/`:placeholder-shown` state), so it needs no `useState`/
+  `useEffect` and works for both controlled and uncontrolled `Input.Control`s without the owning
+  component tracking anything itself. Only its click-to-clear behavior touches the DOM (via a
+  shared ref in context).
+- `Input.Help` / `Input.Error` replace the single `helpText` prop. `aria-describedby` is the caller's
+  responsibility (pass the same `id` to `Input.Control`'s `aria-describedby` and to `Input.Help`/
+  `Input.Error`), matching how every other prop on `Input.Control` is just a native input prop.
 
 ### `render`
 
-`render` composes the actual `<input>` control, **not** the wrapper shell — the shell (border, icons,
-affixes, clear button) is internal anatomy, not something `render` replaces. Given
-`<Input render={<MyInput />} leftIcon={<SearchIcon />} />`, the icon still renders in the shell and
-`MyInput` receives the native input props/ref in place of the plain `<input>`. This is stricter than
-`Button.render`: changing a button's rendered element to another interactive element has legitimate
-uses, but changing an input into something that isn't an actual form control usually does not — the
-custom component supplied to `render` must forward the provided props and ref to a real
-input-compatible control.
-
-### `onValueChange` / `onClear`
-
-`onValueChange?: (value: string) => void` is a convenience alongside the native `onChange`; both work
-together (`<Input onChange={...} />` or `<Input value={query} onValueChange={setQuery} />`). `onClear`
-fires independently of `onValueChange` when the clear control is activated, useful for side effects
-like analytics that shouldn't fire on every keystroke.
+`Input.Control`'s `render` composes the actual `<input>` control, exactly as before: the supplied
+element or render function must forward the given props/ref onto a real input-compatible control.
 
 ## Anatomy
 
 ```
-Input
-├── Field shell                    bordered box; :hover / :focus-within / invalid / disabled
-│   ├── Start adornment             prefix, or leftIcon (mutually exclusive)
-│   ├── <input>                     render-composable; owns text/placeholder/caret only
-│   └── End adornment               clear, or rightIcon, or suffix (one at a time)
-└── Help text                       wired to aria-describedby
+Input.Root                          bordered shell; :hover / :focus-within / invalid / disabled
+├── Input.Adornment side="start"    zero or more, in document order
+├── Input.Control                   plain <input>, render-composable
+└── Input.Adornment side="end" / Input.Clear   zero or more, in document order
+
+Input.Help / Input.Error            rendered as siblings after Input.Root, linked via aria-describedby
 ```
 
 ## CVA structure
 
-Styling is split into small variant functions rather than one large CVA, matching the Button
-precedent:
-
-- `inputRootVariants({ size, invalid, disabled })` — the bordered shell only (background, border,
-  focus ring). Explicit state precedence: default → hover → focus, then **invalid wins** over
-  hover/focus, then **disabled wins** over everything (including invalid) — encoded as `compoundVariants`
-  rather than relying on CSS cascade order across separate variant keys.
-- `inputControlVariants({ size })` — the native `<input>`: text/placeholder/caret color, type step.
-  No border/background here. No `disabled:opacity-*` — disabled colors are explicit per the table
-  below, same rule as Button.
-- `inputIconVariants({ size })` / `inputClearVariants({ size })` — fixed icon boxes.
-- `inputAffixVariants({ size })` — prefix/suffix inner padding + typography.
+- `inputRootVariants({ size, invalid, disabled })` — the bordered shell (background, border, focus
+  ring, horizontal padding/gap). Explicit state precedence: default → hover → focus, then **invalid
+  wins** over hover/focus, then **disabled wins** over everything (including invalid) — encoded as
+  `compoundVariants`.
+- `inputControlVariants({ size })` — the native `<input>`: text/placeholder/caret color only. No
+  border/background/padding here — the shell owns spacing via its `gap`/`px-*`.
+- `inputAdornmentVariants({ size, chip })` — icon-sized box when `chip: false`, shaded pill when
+  `chip: true`.
 
 ## Size tokens
 
 Fixed field width in the design is `190px` — this is a spec artifact. The component must be fluid
 (`width: 100%`) and let the consumer constrain it.
 
-| Size | Field height | Type step | Horizontal padding | Icon box | Clear icon | Help text top offset |
-| --- | --- | --- | --- | --- | --- | --- |
-| Large | 40px | Subtitle (16/24) | 12px | 18px | 16px | 44px |
-| Medium | 36px | Body (14/22) | 12px | 16px | 14px | 40px |
-| Small | 24px | Caption (12/18) | 8px | 14px | 12px | 28px |
+| Size   | Field height | Type step        | Horizontal padding | Icon box | Help text top offset |
+| ------ | ------------ | ---------------- | ------------------ | -------- | -------------------- |
+| Large  | 40px         | Subtitle (16/24) | 12px               | 18px     | 44px                 |
+| Medium | 36px         | Body (14/22)     | 12px               | 16px     | 40px                 |
+| Small  | 24px         | Caption (12/18)  | 8px                | 14px     | 28px                 |
 
 - Radius: `4px` (all sizes, all compositions).
 - Border: `1px solid`.
 - Typography: Regular (400) everywhere — including help text and affixes. Use the named steps from
   [typography/SPEC.md](../typography/SPEC.md): `text-subtitle` / `text-body` / `text-caption` with
   `font-regular`.
-- Vertical centering: the text line is centered in the field box.
+- Vertical centering: the shell uses `items-center`; adornments and the control are centered by flex,
+  not by explicit `top`/`translateY`.
 
 ## Color per state
 
-Placeholder (`Text Entered = False`) is `#CACACA` (Neutral/400). Filled value is `#4B4B4B` (Neutral/600).
-Caret is `#1F1F1F`.
+Placeholder is `#CACACA` (Neutral/400). Filled value is `#4B4B4B` (Neutral/600). Caret is `#1F1F1F`.
 
-| State | Background | Border | Value text | Placeholder | Extra |
-| --- | --- | --- | --- | --- | --- |
-| Default | `#FFFFFF` | `#E1E1E1` (Neutral/300) | `#4B4B4B` | `#CACACA` | — |
-| Hover | `#FFFFFF` | `#47CFD6` (Primary/500) | `#4B4B4B` | `#CACACA` | — |
-| Pressed & Focus | `#FFFFFF` | `#15C5CE` (Primary/600) | `#4B4B4B` | `#CACACA` | focus ring `0 0 1px 1px rgba(21,197,206,0.16)` |
-| Invalid (Figma "Error") | `#FFFFFF` | `#F64C4C` (Danger/600) | `#4B4B4B` | `#CACACA` | help text `#F64C4C` |
-| Disabled | `#FAFAFA` (Neutral/50) | `#EEEEEE` (Neutral/200) | `#CACACA` | `#E1E1E1` (Neutral/300) | — |
+| State                   | Background             | Border                  | Value text | Placeholder             | Extra                                          |
+| ----------------------- | ---------------------- | ----------------------- | ---------- | ----------------------- | ---------------------------------------------- |
+| Default                 | `#FFFFFF`              | `#E1E1E1` (Neutral/300) | `#4B4B4B`  | `#CACACA`               | —                                              |
+| Hover                   | `#FFFFFF`              | `#47CFD6` (Primary/500) | `#4B4B4B`  | `#CACACA`               | —                                              |
+| Pressed & Focus         | `#FFFFFF`              | `#15C5CE` (Primary/600) | `#4B4B4B`  | `#CACACA`               | focus ring `0 0 1px 1px rgba(21,197,206,0.16)` |
+| Invalid (Figma "Error") | `#FFFFFF`              | `#F64C4C` (Danger/600)  | `#4B4B4B`  | `#CACACA`               | `Input.Error` text `#F64C4C`                   |
+| Disabled                | `#FAFAFA` (Neutral/50) | `#EEEEEE` (Neutral/200) | `#CACACA`  | `#E1E1E1` (Neutral/300) | —                                              |
 
 Notes:
+
 - Disabled uses **two different** muted text colors: filled value `#CACACA`, empty placeholder `#E1E1E1`.
 - The focus ring appears only in `Pressed & Focus`; it is not applied to hover or invalid.
 - Invalid keeps its red border on hover and focus (invalid wins over interaction states, but disabled
   still wins over invalid — see CVA structure above).
 
-## Help text
+## Help / Error text
 
-- Position: below the field, left-aligned at `x = 0`, at the per-size top offset in the table above.
+- `Input.Help` — neutral supporting text (`#8E8E8E` / Neutral/500).
+- `Input.Error` — error text (`#F64C4C` / Danger/600), `role="alert"`. Use when `Input.Root` is
+  `invalid`.
+- Position: below the field, left-aligned, at the per-size top offset in the table above.
 - Typography: Large/Medium → Body (`text-body font-regular`); Small → Caption (`text-caption font-regular`).
-- The only color specified in the design is the error color `#F64C4C` (used when `invalid`). A neutral
-  help-text color is not defined by these variants; use `#8E8E8E` (Neutral/500) if a non-invalid hint
-  is needed.
-- Help text does not affect field height; it is laid out outside the bordered box.
-- The field and help text are linked via `aria-describedby` (generated id, merged with any
-  caller-supplied `aria-describedby` rather than overwritten).
+- Neither affects field height; both render outside `Input.Root`.
+- Linking to the field is the caller's responsibility: pass the same `id` to `Input.Control`'s
+  `aria-describedby` and to `Input.Help`/`Input.Error`.
 
 ## Composition geometry
 
-### Left icon (`11:8536`) — icon is a Search glyph, 8.33% inset
+### Left/right icon adornments (`Input.Adornment` without `chip`)
 
-| Size | Icon left | Icon box | Text left | Text right |
-| --- | --- | --- | --- | --- |
-| Large | 12px | 18px | 38px | 12px |
-| Medium | 12px | 16px | 36px | 16px |
-| Small | 8px | 14px | 26px | 8px |
+| Size   | Edge inset | Icon box |
+| ------ | ---------- | -------- |
+| Large  | 12px       | 18px     |
+| Medium | 12px       | 16px     |
+| Small  | 8px        | 14px     |
 
-### Right icon (`11:9189`)
+Spacing between adornments and the control comes from the shell's `gap` (per-size, see CVA
+structure), not per-adornment margins.
 
-| Size | Icon right | Icon box | Text left | Text right |
-| --- | --- | --- | --- | --- |
-| Large | 12px | 18px | 12px | 38px |
-| Medium | 12px | 16px | 12px | 36px |
-| Small | 8px | 14px | 8px | 26px |
+### `Input.Clear`
 
-Icons are vertically centered (`top: 50%`, `translateY(-50%)`).
+A built-in end adornment, placed as a sibling of `Input.Control`:
 
-### Clear button (Basic / icon compositions, `Typing = True`)
+```tsx
+<Input.Root>
+  <Input.Control placeholder="Search" />
+  <Input.Clear />
+</Input.Root>
+```
 
-| Size | Right | Box | Text right |
-| --- | --- | --- | --- |
-| Large | 12px | 16px | 36px |
-| Medium | 12px | 14px | 34px |
-| Small | 8px | 12px | 24px |
+- Visibility maps to the Figma `Typing` axis: hidden while the field is unfocused; visible while
+  focused **and** non-empty. This is CSS-only — `Input.Control` carries the Tailwind `peer` class,
+  and `Input.Clear` is `hidden` by default with `peer-[&:focus:not(:placeholder-shown)]:inline-flex`
+  turning it on. `Input.Control` therefore needs a non-empty `placeholder` (even a space) for the
+  `:placeholder-shown` check to accurately mean "empty" — this is a real DOM-state selector, not a
+  React state mirror, so it stays correct through controlled and uncontrolled value changes alike
+  without a value-tracking effect.
+- Clicking resets the control's value through the native `HTMLInputElement` setter + a dispatched
+  `input` event, so it works for both controlled `value`/`onChange` and uncontrolled
+  `defaultValue` usage, then refocuses the control. `onMouseDown` is prevented so the click doesn't
+  blur the field first (which would otherwise unmount the button before the click fires).
+- Renders the Figma glyph (`Subtract`, a filled circle-x) by default; override with children for a
+  custom icon.
+- Color maps to the Figma `State 2` axis via `text-*`/`hover:text-*`/`active:text-*` (progressive
+  neutral, not the field border colors):
 
-- Vertically centered, `cursor: pointer`.
-- Glyph is a filled circle-x (`Subtract` vector, 4.17% inset).
-- Visible only while focused and the field is non-empty. Hover / pressed are the `State 2` values.
+  | State                  | Color                   |
+  | ---------------------- | ----------------------- |
+  | Field not focused      | hidden                  |
+  | Typing / field focused | `#CACACA` (Neutral/400) |
+  | Clear hover            | `#8E8E8E` (Neutral/500) |
+  | Clear pressed          | `#4B4B4B` (Neutral/600) |
 
-### Number stepper (`11:9747`) — not implemented on `Input`
+### Number stepper (`11:9747`) — not implemented
 
-Right-edge column, full height, rounded on the right corners only (`4px`), `overflow: hidden`.
+Deferred to a future separate `NumberField` primitive per the design doc, not an
+`<Input.Control type="number" />` composition detail.
 
-| Size | Column width | Arrow box | Arrow top / bottom inset | Text right |
-| --- | --- | --- | --- | --- |
-| Large | 26px | 14px | 5px | 34px |
-| Medium | 24px | 12px | 5px | 32px |
-| Small | 18px | 10px | 2px | 22px |
+### Prefix / Suffix (`Input.Adornment chip`)
 
-Two stacked chevrons (up top, down bottom), each an SVG stroke path; the down arrow is the up arrow
-mirrored. Text padding-left stays at the standard per-size horizontal padding.
-
-### Prefix / Suffix (`11:10328`, `11:10945`, `11:11523`)
-
-Affixes are full-height flex columns pinned to the left/right edge of the field, vertically centered,
-with the right corners rounded `4px` and `overflow: hidden`. Affix text color is `#8E8E8E` (Neutral/500),
-same font size and line-height as the field value.
-
-| Size | Affix inner padding | Text left (prefix present) | Text right (suffix present) |
-| --- | --- | --- | --- |
-| Large | `8px 12px` | 30px | 54px |
-| Medium | `7px 12px` | 29px | 50px |
-| Small | `3px 8px` | 20px | 38px |
-
-The prefix/suffix-only sets use the same offsets, applied to whichever side is present.
+Affixes are rendered via `<Input.Adornment side="start" chip>` / `<Input.Adornment side="end" chip>`:
+full field height, rounded `4px`, background Neutral/50, text Neutral/500, horizontal padding per the
+shared adornment CVA.
 
 ## Behaviour
 
 - Field is fluid width; the `190px` in Figma is only the spec canvas width.
 - Placeholder text does not wrap (`white-space: nowrap` in the design); with a fluid width, allow the
   native input to clip instead.
-- Disabled is non-interactive: no hover border change, no focus ring, no clear button.
-- The clear control must be a real focusable control (`type="button"`), not a decorative div, with an
-  accessible label (`clearLabel`, default `"Clear input"`).
-- Icons/affixes/the clear glyph are caller-supplied `ReactNode`s. The Figma sample glyphs (Search,
+- Disabled is non-interactive: no hover border change, no focus ring.
+- Icons/affixes are caller-supplied children of `Input.Adornment`. The Figma sample glyphs (Search,
   circle-x) must not be hardcoded into the component.
 
 ## Required design tokens
