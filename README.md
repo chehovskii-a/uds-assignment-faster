@@ -1,47 +1,93 @@
 # Faster
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Faster UI is a small, production-ready component library built for a Design System assignment. It ships Button, Input and Dialog primitives, backed by reusable design tokens, documented in Storybook, and covered by Jest and Cypress tests.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+This is an [Nx](https://nx.dev) monorepo containing:
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/react-monorepo-tutorial?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+- **[`libs/faster`](./libs/faster)** — the `@chehovskii-a/faster` component library (published to GitHub Packages)
+- **[`apps/showcase`](./apps/showcase)** — a demo app consuming the library
+- **[`apps/showcase-e2e`](./apps/showcase-e2e)** — Cypress E2E tests for the showcase app
 
 ### Figma
 
-Original: https://www.figma.com/design/WYuHdUuUq31HzkdJhoKwXl/TapTap-Design-System%E4%B8%A8Developers--Community-?node-id=12-11244&p=f&t=IdkiBp7B4GxCdKAF-0
-Duplicate: https://www.figma.com/design/lXoWsgMekR00jKGtXIffk0/TapTap-Design-System%E4%B8%A8Developers--Community---Copy-?node-id=15-12480&p=f&t=NmaF1oCl62G1IJJ7-0
+- Original: https://www.figma.com/design/WYuHdUuUq31HzkdJhoKwXl/TapTap-Design-System%E4%B8%A8Developers--Community-?node-id=12-11244&p=f&t=IdkiBp7B4GxCdKAF-0
+- Duplicate: https://www.figma.com/design/lXoWsgMekR00jKGtXIffk0/TapTap-Design-System%E4%B8%A8Developers--Community---Copy-?node-id=15-12480&p=f&t=NmaF1oCl62G1IJJ7-0
 
-## Commands
+## Tech stack
 
-### Run tasks
+- React + TypeScript
+- Tailwind CSS + design tokens
+- Jest + React Testing Library (unit tests)
+- Cypress (component & e2e tests)
+- Storybook (documentation & interactive controls)
+- Nx (task orchestration) + GitHub Actions (CI/CD)
 
-To run components storybook
+## Getting started
 
-```
-npx nx run faster:storybook
-```
-
-To run the dev server for your app, use:
-
-```sh
-npx nx serve showcase
-```
-
-To create a production bundle:
+Requires Node.js 24 and npm.
 
 ```sh
-npx nx build showcase
+npm ci
 ```
 
-To see all available targets to run for a project, run:
+## Common tasks
+
+Run against the whole workspace:
+
+```sh
+npx nx run-many -t lint test build typecheck component-test e2e build-storybook
+```
+
+Or target a single project (`faster` or `showcase`):
 
 ```sh
 npx nx show project showcase
 ```
 
+### Library (`faster`)
+
+```sh
+npx nx run faster:test            # Jest + React Testing Library
+npx nx run faster:component-test  # Cypress component tests
+npx nx run faster:storybook       # Storybook dev server
+npx nx run faster:build           # library build (dist/)
+```
+
+### Showcase app
+
+```sh
+npx nx serve showcase       # dev server
+npx nx build showcase       # production bundle
+npx nx e2e showcase-e2e     # Cypress E2E tests
+```
+
+## Using the library
+
+```sh
+echo "@chehovskii-a:registry=https://npm.pkg.github.com" >> .npmrc
+npm install @chehovskii-a/faster
+```
+
+```tsx
+import '@chehovskii-a/faster/index.css';
+import { Button, Dialog, Input } from '@chehovskii-a/faster';
+```
+
+See [`libs/faster/README.md`](./libs/faster/README.md) for library-specific details.
+
+## CI/CD
+
+- [`ci.yml`](./.github/workflows/ci.yml) runs on every push/PR: install, lint, test, build, typecheck, component tests, e2e, and Storybook build.
+- [`publish.yml`](./.github/workflows/publish.yml) publishes `@chehovskii-a/faster` to GitHub Packages on release.
+
+## Scaffolding reference
+
+<details>
+<summary>Commands used to generate this workspace</summary>
+
 ### Workspace
 
-```
+```sh
 npx create-nx-workspace@latest faster \
   --preset=react-monorepo \
   --appName=showcase \
@@ -54,7 +100,7 @@ npx create-nx-workspace@latest faster \
 
 ### Library
 
-```
+```sh
 npx nx g @nx/react:library libs/faster \
   --unitTestRunner=jest \
   --linter=eslint \
@@ -63,13 +109,13 @@ npx nx g @nx/react:library libs/faster \
 
 ### Storybook
 
-```
+```sh
 npx nx g @nx/react:storybook-configuration '@faster/faster'
 ```
 
 ### Components
 
-```
+```sh
 npx nx g @nx/react:component libs/faster/src/lib/button/button \
   --export \
   --style=css
@@ -85,7 +131,7 @@ npx nx g @nx/react:component libs/faster/src/lib/dialog/dialog \
 
 ### Stories
 
-```
+```sh
 npx nx g @nx/react:stories \
   --project='@faster/faster' \
   --interactionTests=true
@@ -93,7 +139,7 @@ npx nx g @nx/react:stories \
 
 ### Component tests
 
-```
+```sh
 npx nx g @nx/react:component-test \
   --project='@faster/faster' \
   --componentPath='lib/button/button.tsx'
@@ -107,77 +153,4 @@ npx nx g @nx/react:component-test \
   --componentPath='lib/dialog/dialog.tsx'
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
-
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Add new projects
-
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-Use the plugin's generator to create new projects.
-
-To generate a new application, use:
-
-```sh
-npx nx g @nx/react:app demo
-```
-
-To generate a new library, use:
-
-```sh
-npx nx g @nx/react:lib mylib
-```
-
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
-
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
-```
-
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/react-monorepo-tutorial?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+</details>

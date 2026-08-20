@@ -2,9 +2,6 @@
 
 Faster UI — the Button, Input and Dialog primitives of the Faster design system.
 
-Published to GitHub Packages. The scope must match the repository owner
-(`chehovskii-a`), otherwise `npm publish` is rejected by the registry.
-
 ## Install
 
 ```sh
