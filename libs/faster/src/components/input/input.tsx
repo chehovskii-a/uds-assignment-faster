@@ -29,10 +29,12 @@ const InputContext = createContext<InputContextValue>({
   controlRef: { current: null },
 });
 
-function useInputContext() {
+function useInputContext(component: string) {
   const context = use(InputContext);
   if (!context) {
-    throw new Error('Input components must be used within an Input.Root');
+    throw new Error(
+      `<Input.${component}> must be rendered inside <Input.Root>.`,
+    );
   }
   return context;
 }
@@ -179,7 +181,7 @@ function InputControl({
     invalid,
     disabled: rootDisabled,
     controlRef,
-  } = useInputContext();
+  } = useInputContext('Control');
   const controlProps: RenderProps = {
     ...props,
     ref: mergeRefs(controlRef, ref),
@@ -276,7 +278,7 @@ function InputAdornment({
   className,
   ...props
 }: InputAdornmentProps) {
-  const { size } = useInputContext();
+  const { size } = useInputContext('Adornment');
   return (
     <span
       data-side={side}
@@ -307,7 +309,7 @@ function InputClear({
   children,
   ...props
 }: InputClearProps) {
-  const { size, controlRef } = useInputContext();
+  const { size, controlRef } = useInputContext('Clear');
 
   function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
     const control = controlRef.current;

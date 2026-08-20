@@ -1,8 +1,8 @@
 import {
   cloneElement,
   createContext,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useId,
   useMemo,
@@ -16,6 +16,8 @@ import {
 } from 'react';
 import { cva } from 'class-variance-authority';
 import { cn } from '#/utils/cn';
+import { CloseIcon } from '#/icons/close';
+import { mergeEventHandlers } from '#/utils/mergeEventHandlers';
 
 export type DialogSize = 'small' | 'medium' | 'large';
 
@@ -29,23 +31,13 @@ interface DialogContextValue {
 const DialogContext = createContext<DialogContextValue | null>(null);
 
 function useDialogContext(component: string): DialogContextValue {
-  const context = useContext(DialogContext);
+  const context = use(DialogContext);
   if (!context) {
     throw new Error(
       `<Dialog.${component}> must be rendered inside <Dialog.Root>.`,
     );
   }
   return context;
-}
-
-function composeEventHandlers<E>(
-  userHandler: ((event: E) => void) | undefined,
-  internalHandler: ((event: E) => void) | undefined,
-) {
-  return (event: E) => {
-    userHandler?.(event);
-    internalHandler?.(event);
-  };
 }
 
 type RenderElement = ReactElement<{
@@ -63,7 +55,7 @@ export interface DialogRootProps {
   open?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Figma behavior: light-dismiss on backdrop click. Default true. */
+  /** Default true. */
   closeOnBackdrop?: boolean;
 }
 
@@ -112,7 +104,7 @@ function DialogTrigger({
   ...props
 }: DialogTriggerProps) {
   const { setOpen } = useDialogContext('Trigger');
-  const handleClick = composeEventHandlers<MouseEvent<HTMLButtonElement>>(
+  const handleClick = mergeEventHandlers<MouseEvent<HTMLButtonElement>>(
     onClick,
     () => setOpen(true),
   );
@@ -145,7 +137,7 @@ function DialogClose({
   ...props
 }: DialogCloseProps) {
   const { setOpen } = useDialogContext('Close');
-  const handleClick = composeEventHandlers<MouseEvent<HTMLButtonElement>>(
+  const handleClick = mergeEventHandlers<MouseEvent<HTMLButtonElement>>(
     onClick,
     () => setOpen(false),
   );
@@ -260,28 +252,46 @@ function DialogContent({
       aria-labelledby={titleId}
       closedby={closeOnBackdrop ? 'any' : 'closerequest'}
       className={cn(dialogContentVariants({ size }), className)}
-      onClose={composeEventHandlers(onClose, () => setOpen(false))}
+      onClose={mergeEventHandlers(onClose, () => setOpen(false))}
       {...props}
     />
   );
 }
 
-export type DialogTitleProps = ComponentPropsWithoutRef<'h2'>;
+export interface DialogTitleProps extends ComponentPropsWithoutRef<'h2'> {
+  /** Renders a close button next to the title. Default false. */
+  showClose?: boolean;
+}
 
-function DialogTitle({ className, children, ...props }: DialogTitleProps) {
+function DialogTitle({
+  className,
+  children,
+  showClose = false,
+  ...props
+}: DialogTitleProps) {
   const { titleId } = useDialogContext('Title');
 
   return (
-    <h2
-      id={titleId}
-      className={cn(
-        'pr-6 text-title font-medium text-neutral-700 truncate',
-        className,
+    <>
+      <h2
+        id={titleId}
+        className={cn(
+          'pr-6 text-title font-medium text-neutral-700 truncate',
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </h2>
+      {showClose && (
+        <DialogClose
+          aria-label="Close"
+          className="absolute right-6 top-6 text-neutral-500 hover:text-neutral-700"
+        >
+          <CloseIcon />
+        </DialogClose>
       )}
-      {...props}
-    >
-      {children}
-    </h2>
+    </>
   );
 }
 
