@@ -15,7 +15,7 @@ import {
   type ReactNode,
 } from 'react';
 import { cva } from 'class-variance-authority';
-import { cn } from '../cn';
+import { cn } from '#/utils/cn';
 
 export type DialogSize = 'small' | 'medium' | 'large';
 
@@ -31,7 +31,9 @@ const DialogContext = createContext<DialogContextValue | null>(null);
 function useDialogContext(component: string): DialogContextValue {
   const context = useContext(DialogContext);
   if (!context) {
-    throw new Error(`<Dialog.${component}> must be rendered inside <Dialog.Root>.`);
+    throw new Error(
+      `<Dialog.${component}> must be rendered inside <Dialog.Root>.`,
+    );
   }
   return context;
 }
@@ -46,7 +48,10 @@ function composeEventHandlers<E>(
   };
 }
 
-type RenderElement = ReactElement<{ children?: ReactNode; onClick?: (event: MouseEvent<HTMLButtonElement>) => void }>;
+type RenderElement = ReactElement<{
+  children?: ReactNode;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
+}>;
 
 function getRenderChildren(render: RenderElement): ReactNode {
   return render.props.children;
@@ -89,17 +94,28 @@ function DialogRoot({
     [open, setOpen, closeOnBackdrop, titleId],
   );
 
-  return <DialogContext.Provider value={value}>{children}</DialogContext.Provider>;
+  return (
+    <DialogContext.Provider value={value}>{children}</DialogContext.Provider>
+  );
 }
 
-export interface DialogTriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface DialogTriggerProps
+  extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Renders the trigger behavior onto this element instead of a plain `<button>`. */
   render?: RenderElement;
 }
 
-function DialogTrigger({ render, onClick, children, ...props }: DialogTriggerProps) {
+function DialogTrigger({
+  render,
+  onClick,
+  children,
+  ...props
+}: DialogTriggerProps) {
   const { setOpen } = useDialogContext('Trigger');
-  const handleClick = composeEventHandlers<MouseEvent<HTMLButtonElement>>(onClick, () => setOpen(true));
+  const handleClick = composeEventHandlers<MouseEvent<HTMLButtonElement>>(
+    onClick,
+    () => setOpen(true),
+  );
 
   if (render) {
     return cloneElement(render, {
@@ -116,14 +132,23 @@ function DialogTrigger({ render, onClick, children, ...props }: DialogTriggerPro
   );
 }
 
-export interface DialogCloseProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface DialogCloseProps
+  extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Renders the close behavior onto this element instead of a plain `<button>`. */
   render?: RenderElement;
 }
 
-function DialogClose({ render, onClick, children, ...props }: DialogCloseProps) {
+function DialogClose({
+  render,
+  onClick,
+  children,
+  ...props
+}: DialogCloseProps) {
   const { setOpen } = useDialogContext('Close');
-  const handleClick = composeEventHandlers<MouseEvent<HTMLButtonElement>>(onClick, () => setOpen(false));
+  const handleClick = composeEventHandlers<MouseEvent<HTMLButtonElement>>(
+    onClick,
+    () => setOpen(false),
+  );
 
   if (render) {
     return cloneElement(render, {
@@ -155,8 +180,20 @@ const dialogContentVariants = cva(
     variants: {
       size: {
         small: ['w-[400px]', 'left-1/2', 'top-[100px]', '-translate-x-1/2'],
-        medium: ['w-[600px]', 'left-1/2', 'top-1/2', '-translate-x-1/2', '-translate-y-1/2'],
-        large: ['w-[900px]', 'left-1/2', 'top-1/2', '-translate-x-1/2', '-translate-y-1/2'],
+        medium: [
+          'w-[600px]',
+          'left-1/2',
+          'top-1/2',
+          '-translate-x-1/2',
+          '-translate-y-1/2',
+        ],
+        large: [
+          'w-[900px]',
+          'left-1/2',
+          'top-1/2',
+          '-translate-x-1/2',
+          '-translate-y-1/2',
+        ],
       },
     },
     defaultVariants: {
@@ -169,8 +206,14 @@ export interface DialogContentProps extends ComponentPropsWithoutRef<'dialog'> {
   size?: DialogSize;
 }
 
-function DialogContent({ size = 'small', className, onClose, ...props }: DialogContentProps) {
-  const { open, setOpen, closeOnBackdrop, titleId } = useDialogContext('Content');
+function DialogContent({
+  size = 'small',
+  className,
+  onClose,
+  ...props
+}: DialogContentProps) {
+  const { open, setOpen, closeOnBackdrop, titleId } =
+    useDialogContext('Content');
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -229,7 +272,10 @@ function DialogTitle({ className, children, ...props }: DialogTitleProps) {
   return (
     <h2
       id={titleId}
-      className={cn('pr-6 text-title font-medium text-neutral-700 truncate', className)}
+      className={cn(
+        'pr-6 text-title font-medium text-neutral-700 truncate',
+        className,
+      )}
       {...props}
     >
       {children}
@@ -240,13 +286,20 @@ function DialogTitle({ className, children, ...props }: DialogTitleProps) {
 export type DialogDescriptionProps = ComponentPropsWithoutRef<'p'>;
 
 function DialogDescription({ className, ...props }: DialogDescriptionProps) {
-  return <p className={cn('mt-4 text-body font-regular text-neutral-600', className)} {...props} />;
+  return (
+    <p
+      className={cn('mt-4 text-body font-regular text-neutral-600', className)}
+      {...props}
+    />
+  );
 }
 
 export type DialogFooterProps = ComponentPropsWithoutRef<'div'>;
 
 function DialogFooter({ className, ...props }: DialogFooterProps) {
-  return <div className={cn('mt-8 flex justify-end gap-2', className)} {...props} />;
+  return (
+    <div className={cn('mt-8 flex justify-end gap-2', className)} {...props} />
+  );
 }
 
 export const Dialog = {

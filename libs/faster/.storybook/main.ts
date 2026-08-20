@@ -4,7 +4,7 @@ import { dirname } from 'node:path';
 import type { StorybookConfig } from '@storybook/react-vite';
 
 const config: StorybookConfig = {
-  stories: ['../src/lib/**/*.@(mdx|stories.@(js|jsx|ts|tsx))'],
+  stories: ['../src/components/**/*.@(mdx|stories.@(js|jsx|ts|tsx))'],
   addons: [],
   framework: {
     name: getAbsolutePath('@storybook/react-vite'),
@@ -16,6 +16,7 @@ const config: StorybookConfig = {
   },
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getAbsolutePath(value: string): any {
   return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
 }

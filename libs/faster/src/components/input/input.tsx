@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { cva } from 'class-variance-authority';
-import { cn } from '../cn';
+import { cn } from '#/utils/cn';
 
 export type InputSize = 'large' | 'medium' | 'small';
 
@@ -22,10 +22,21 @@ export interface InputState {
 
 type RenderProps = ComponentPropsWithRef<'input'>;
 type RenderElement = ReactElement<RenderProps>;
-type Render = RenderElement | ((props: RenderProps, state: InputState) => RenderElement);
+type Render =
+  | RenderElement
+  | ((props: RenderProps, state: InputState) => RenderElement);
 
 const inputRootVariants = cva(
-  ['flex', 'w-full', 'items-center', 'overflow-hidden', 'rounded-[4px]', 'border', 'border-neutral-300', 'bg-white'],
+  [
+    'flex',
+    'w-full',
+    'items-center',
+    'overflow-hidden',
+    'rounded-[4px]',
+    'border',
+    'border-neutral-300',
+    'bg-white',
+  ],
   {
     variants: {
       size: {
@@ -54,9 +65,18 @@ const inputRootVariants = cva(
         ],
       },
       // Invalid wins over hover/focus, but not over disabled.
-      { invalid: true, disabled: false, class: 'border-danger-600 hover:border-danger-600 focus-within:border-danger-600 focus-within:shadow-none' },
+      {
+        invalid: true,
+        disabled: false,
+        class:
+          'border-danger-600 hover:border-danger-600 focus-within:border-danger-600 focus-within:shadow-none',
+      },
       // Disabled wins over everything.
-      { disabled: true, class: 'border-neutral-200 bg-neutral-50 hover:border-neutral-200 focus-within:border-neutral-200 focus-within:shadow-none' },
+      {
+        disabled: true,
+        class:
+          'border-neutral-200 bg-neutral-50 hover:border-neutral-200 focus-within:border-neutral-200 focus-within:shadow-none',
+      },
     ],
     defaultVariants: {
       size: 'large',
@@ -93,21 +113,37 @@ const inputControlVariants = cva(
   },
 );
 
-const inputIconVariants = cva(['inline-flex', 'shrink-0', 'items-center', 'justify-center', '[&>svg]:size-full'], {
-  variants: {
-    size: {
-      large: 'w-4.5 h-4.5',
-      medium: 'w-4 h-4',
-      small: 'w-3.5 h-3.5',
+const inputIconVariants = cva(
+  [
+    'inline-flex',
+    'shrink-0',
+    'items-center',
+    'justify-center',
+    '[&>svg]:size-full',
+  ],
+  {
+    variants: {
+      size: {
+        large: 'w-4.5 h-4.5',
+        medium: 'w-4 h-4',
+        small: 'w-3.5 h-3.5',
+      },
+    },
+    defaultVariants: {
+      size: 'large',
     },
   },
-  defaultVariants: {
-    size: 'large',
-  },
-});
+);
 
 const inputClearVariants = cva(
-  ['inline-flex', 'shrink-0', 'cursor-pointer', 'items-center', 'justify-center', '[&>svg]:size-full'],
+  [
+    'inline-flex',
+    'shrink-0',
+    'cursor-pointer',
+    'items-center',
+    'justify-center',
+    '[&>svg]:size-full',
+  ],
   {
     variants: {
       size: {
@@ -123,7 +159,14 @@ const inputClearVariants = cva(
 );
 
 const inputAffixVariants = cva(
-  ['inline-flex', 'h-full', 'shrink-0', 'items-center', 'font-regular', 'text-neutral-500'],
+  [
+    'inline-flex',
+    'h-full',
+    'shrink-0',
+    'items-center',
+    'font-regular',
+    'text-neutral-500',
+  ],
   {
     variants: {
       size: {
@@ -142,7 +185,11 @@ const inputAffixVariants = cva(
 // offsets exactly (e.g. large: 12 + 18 + 8 = 38px) instead of hardcoding that 38px directly. When an
 // affix occupies an edge, its own inner padding supplies the equivalent spacing, so the row omits its
 // edge padding on that side.
-const ROW_GAP: Record<InputSize, string> = { large: 'gap-2', medium: 'gap-2', small: 'gap-1' };
+const ROW_GAP: Record<InputSize, string> = {
+  large: 'gap-2',
+  medium: 'gap-2',
+  small: 'gap-1',
+};
 const ROW_EDGE_PADDING: Record<InputSize, { start: string; end: string }> = {
   large: { start: 'pl-3', end: 'pr-3' },
   medium: { start: 'pl-3', end: 'pr-3' },
@@ -176,7 +223,10 @@ function warnOnUnsupportedAdornments(props: {
   suffix?: ReactNode;
   clearable?: boolean;
 }) {
-  if (typeof process !== 'undefined' && process.env?.['NODE_ENV'] === 'production') {
+  if (
+    typeof process !== 'undefined' &&
+    process.env?.['NODE_ENV'] === 'production'
+  ) {
     return;
   }
 
@@ -193,11 +243,14 @@ function warnOnUnsupportedAdornments(props: {
   }
 
   if ((props.leftIcon && props.prefix) || (props.rightIcon && props.suffix)) {
-    console.warn('Input: icons and affixes are not combined in the design on the same side.');
+    console.warn(
+      'Input: icons and affixes are not combined in the design on the same side.',
+    );
   }
 }
 
-export interface InputProps extends Omit<ComponentPropsWithRef<'input'>, 'size' | 'prefix'> {
+export interface InputProps
+  extends Omit<ComponentPropsWithRef<'input'>, 'size' | 'prefix'> {
   size?: InputSize;
   /** Marks the field invalid. Also sets `aria-invalid`. */
   invalid?: boolean;
@@ -248,14 +301,25 @@ export function Input({
   'aria-describedby': ariaDescribedBy,
   ...props
 }: InputProps) {
-  warnOnUnsupportedAdornments({ leftIcon, rightIcon, prefix, suffix, clearable });
+  warnOnUnsupportedAdornments({
+    leftIcon,
+    rightIcon,
+    prefix,
+    suffix,
+    clearable,
+  });
 
   const isDisabled = Boolean(disabled);
   const isControlled = value !== undefined;
-  const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue ?? '');
+  const [uncontrolledValue, setUncontrolledValue] = useState(
+    defaultValue ?? '',
+  );
   const currentValue = isControlled ? value : uncontrolledValue;
   const [focused, setFocused] = useState(false);
-  const filled = currentValue !== undefined && currentValue !== null && String(currentValue).length > 0;
+  const filled =
+    currentValue !== undefined &&
+    currentValue !== null &&
+    String(currentValue).length > 0;
 
   const helpTextId = useId();
   const describedBy = helpText
@@ -319,7 +383,13 @@ export function Input({
 
   const edge = ROW_EDGE_PADDING[size];
   const hasStartAdornment = Boolean(prefix || leftIcon);
-  const endAdornment = showClear ? 'clear' : suffix ? 'suffix' : rightIcon ? 'icon' : null;
+  const endAdornment = showClear
+    ? 'clear'
+    : suffix
+      ? 'suffix'
+      : rightIcon
+        ? 'icon'
+        : null;
 
   return (
     <div>
@@ -328,11 +398,19 @@ export function Input({
         data-invalid={invalid || undefined}
         data-filled={filled || undefined}
         data-focused={focused || undefined}
-        className={cn(inputRootVariants({ size, invalid, disabled: isDisabled }), rootClassName)}
+        className={cn(
+          inputRootVariants({ size, invalid, disabled: isDisabled }),
+          rootClassName,
+        )}
       >
-        {prefix && <span className={cn(inputAffixVariants({ size }))}>{prefix}</span>}
+        {prefix && (
+          <span className={cn(inputAffixVariants({ size }))}>{prefix}</span>
+        )}
         {leftIcon && !prefix && (
-          <span aria-hidden className={cn(edge.start, inputIconVariants({ size }))}>
+          <span
+            aria-hidden
+            className={cn(edge.start, inputIconVariants({ size }))}
+          >
             {leftIcon}
           </span>
         )}
@@ -357,11 +435,16 @@ export function Input({
           </button>
         )}
         {endAdornment === 'icon' && (
-          <span aria-hidden className={cn(edge.end, inputIconVariants({ size }))}>
+          <span
+            aria-hidden
+            className={cn(edge.end, inputIconVariants({ size }))}
+          >
             {rightIcon}
           </span>
         )}
-        {endAdornment === 'suffix' && <span className={cn(inputAffixVariants({ size }))}>{suffix}</span>}
+        {endAdornment === 'suffix' && (
+          <span className={cn(inputAffixVariants({ size }))}>{suffix}</span>
+        )}
       </div>
       {helpText && (
         <p id={helpTextId} className={cn(helpTextVariants({ size, invalid }))}>

@@ -22,7 +22,9 @@ describe('Button', () => {
   it('applies the native disabled attribute by default', () => {
     render(<Button disabled>Save</Button>);
 
-    const button = screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement;
+    const button = screen.getByRole('button', {
+      name: 'Save',
+    }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     expect(button.getAttribute('aria-disabled')).toBe('true');
   });
@@ -39,21 +41,12 @@ describe('Button', () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it('keeps the button focusable when focusableWhenDisabled is set', () => {
-    render(
-      <Button disabled focusableWhenDisabled>
-        Save
-      </Button>,
-    );
-
-    const button = screen.getByRole('button', { name: 'Save' }) as HTMLButtonElement;
-    expect(button.disabled).toBe(false);
-    expect(button.getAttribute('aria-disabled')).toBe('true');
-  });
-
   it('renders leftIcon and rightIcon around the label', () => {
     render(
-      <Button leftIcon={<span data-testid="left" />} rightIcon={<span data-testid="right" />}>
+      <Button
+        leftIcon={<span data-testid="left" />}
+        rightIcon={<span data-testid="right" />}
+      >
         Continue
       </Button>,
     );
@@ -78,7 +71,6 @@ describe('Button', () => {
     render(
       <Button
         disabled
-        focusableWhenDisabled
         render={(props, state) => (
           <button {...props} data-loading={state.disabled || undefined}>
             Save
@@ -89,6 +81,8 @@ describe('Button', () => {
       </Button>,
     );
 
-    expect(screen.getByRole('button', { name: 'Save' }).getAttribute('data-loading')).toBe('true');
+    expect(
+      screen.getByRole('button', { name: 'Save' }).getAttribute('data-loading'),
+    ).toBe('true');
   });
 });

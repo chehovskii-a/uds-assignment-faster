@@ -1,6 +1,6 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-@source "./lib";
+@source "./components";
 
 /*
  * Faster design tokens
@@ -37,7 +37,8 @@
 
   --color-smoke: rgb(0 0 0 / 0.3);
 
-  --shadow-elevation-4: 0 8px 20px rgb(0 0 0 / 0.06), 0 24px 60px rgb(0 0 0 / 0.12);
+  --shadow-elevation-4:
+    0 8px 20px rgb(0 0 0 / 0.06), 0 24px 60px rgb(0 0 0 / 0.12);
 
   /* Typography (see typography/SPEC.md) */
   --text-h1: 30px;

@@ -20,7 +20,6 @@ const meta = {
     },
     iconOnly: { control: 'boolean' },
     disabled: { control: 'boolean' },
-    focusableWhenDisabled: { control: 'boolean' },
   },
 } satisfies Meta<typeof Button>;
 export default meta;
@@ -79,15 +78,6 @@ export const Disabled = {
   args: { disabled: true },
 } satisfies Story;
 
-export const FocusableWhenDisabled = {
-  args: { disabled: true, focusableWhenDisabled: true },
-  play: async ({ canvas }) => {
-    const button = canvas.getByRole('button', { name: 'Button' }) as HTMLButtonElement;
-    await expect(button.disabled).toBe(false);
-    await expect(button.getAttribute('aria-disabled')).toBe('true');
-  },
-} satisfies Story;
-
 export const ClickInteraction = {
   args: { children: 'Click me' },
   play: async ({ args, canvas }) => {
@@ -98,7 +88,10 @@ export const ClickInteraction = {
 
 export const AsAnchorViaButtonVariants = {
   render: () => (
-    <a href="#settings" className={buttonVariants({ variant: 'primary', size: 'large' })}>
+    <a
+      href="#settings"
+      className={buttonVariants({ variant: 'primary', size: 'large' })}
+    >
       Settings
     </a>
   ),

@@ -5,8 +5,19 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "imports": {
+    "#/*": [
+      "./src/*.ts",
+      "./src/*.tsx"
+    ],
+    "#/*.css": "./src/*.css"
+  },
   "exports": {
     "./package.json": "./package.json",
+    "./index.css": {
+      "@faster/source": "./src/styles.css",
+      "default": "./dist/index.css"
+    },
     ".": {
       "@faster/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
@@ -21,8 +32,8 @@
     ]
   },
   "dependencies": {
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.6.0"
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "tailwind-merge": "3.6.0"
   }
 }

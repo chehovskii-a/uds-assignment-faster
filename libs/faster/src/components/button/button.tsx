@@ -1,6 +1,11 @@
-import { cloneElement, type ComponentPropsWithRef, type ReactElement, type ReactNode } from 'react';
+import {
+  cloneElement,
+  type ComponentPropsWithRef,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../cn';
+import { cn } from '#/utils/cn';
 
 export type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'link';
 export type ButtonSize = 'large' | 'medium' | 'small';
@@ -11,7 +16,9 @@ export interface ButtonState {
 
 type RenderProps = ComponentPropsWithRef<'button'>;
 type RenderElement = ReactElement<{ children?: ReactNode }>;
-type Render = RenderElement | ((props: RenderProps, state: ButtonState) => RenderElement);
+type Render =
+  | RenderElement
+  | ((props: RenderProps, state: ButtonState) => RenderElement);
 
 export const buttonVariants = cva(
   [
@@ -92,41 +99,53 @@ export const buttonVariants = cva(
   },
 );
 
-const buttonContentVariants = cva(['inline-flex', 'items-center', 'justify-center', 'gap-1'], {
-  variants: {
-    size: {
-      large: 'text-subtitle',
-      medium: 'text-body',
-      small: 'text-caption',
+const buttonContentVariants = cva(
+  ['inline-flex', 'items-center', 'justify-center', 'gap-1'],
+  {
+    variants: {
+      size: {
+        large: 'text-subtitle',
+        medium: 'text-body',
+        small: 'text-caption',
+      },
+      isLink: {
+        true: '',
+        false: '',
+      },
     },
-    isLink: {
-      true: '',
-      false: '',
+    compoundVariants: [
+      { isLink: false, size: 'large', class: 'min-w-22.5' },
+      { isLink: false, size: 'medium', class: 'min-w-20.5' },
+      { isLink: false, size: 'small', class: 'min-w-13.5' },
+    ],
+    defaultVariants: {
+      size: 'large',
+      isLink: false,
     },
   },
-  compoundVariants: [
-    { isLink: false, size: 'large', class: 'min-w-22.5' },
-    { isLink: false, size: 'medium', class: 'min-w-20.5' },
-    { isLink: false, size: 'small', class: 'min-w-13.5' },
-  ],
-  defaultVariants: {
-    size: 'large',
-    isLink: false,
-  },
-});
+);
 
-const buttonIconVariants = cva(['inline-flex', 'shrink-0', 'items-center', 'justify-center', '[&>svg]:size-full'], {
-  variants: {
-    size: {
-      large: 'w-4.5 h-4.5',
-      medium: 'w-4 h-4',
-      small: 'w-3.5 h-3.5',
+const buttonIconVariants = cva(
+  [
+    'inline-flex',
+    'shrink-0',
+    'items-center',
+    'justify-center',
+    '[&>svg]:size-full',
+  ],
+  {
+    variants: {
+      size: {
+        large: 'w-4.5 h-4.5',
+        medium: 'w-4 h-4',
+        small: 'w-3.5 h-3.5',
+      },
+    },
+    defaultVariants: {
+      size: 'large',
     },
   },
-  defaultVariants: {
-    size: 'large',
-  },
-});
+);
 
 export interface ButtonProps
   extends Omit<ComponentPropsWithRef<'button'>, 'size'>,
@@ -139,8 +158,6 @@ export interface ButtonProps
   render?: Render;
   /** Whether the rendered element is a native `<button>`. Set to `false` when `render` isn't a button. */
   nativeButton?: boolean;
-  /** Keeps the button focusable while `disabled`, useful for async/loading transitions. */
-  focusableWhenDisabled?: boolean;
 }
 
 export function Button({
@@ -151,7 +168,6 @@ export function Button({
   rightIcon,
   render,
   nativeButton = true,
-  focusableWhenDisabled = false,
   disabled,
   type = 'button',
   className,
@@ -162,13 +178,16 @@ export function Button({
   const isLink = variant === 'link';
   const state: ButtonState = { disabled: isDisabled };
 
-  const rootClassName = cn(buttonVariants({ variant, size, iconOnly }), className);
+  const rootClassName = cn(
+    buttonVariants({ variant, size, iconOnly }),
+    className,
+  );
 
   const rootProps: RenderProps = {
     ...props,
     className: rootClassName,
     'aria-disabled': isDisabled || undefined,
-    disabled: nativeButton && isDisabled && !focusableWhenDisabled ? true : undefined,
+    disabled: nativeButton && isDisabled,
     ...(nativeButton ? { type } : {}),
   };
 

@@ -1,4 +1,5 @@
-export * from './lib/dialog/dialog';
-export * from './lib/input/input';
-export * from './lib/button/button';
-export * from './lib/faster';
+import './styles.css';
+
+export * from './components/dialog/dialog';
+export * from './components/input/input';
+export * from './components/button/button';
