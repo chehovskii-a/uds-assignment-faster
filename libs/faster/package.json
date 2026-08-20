@@ -42,6 +42,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "nx": {
+    "projectType": "library",
     "tags": [
       "scope:shared",
       "type:ui"

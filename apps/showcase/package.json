@@ -1,5 +1,8 @@
 {
   "name": "@faster/showcase",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@chehovskii-a/faster": "workspace:*"
+  }
 }

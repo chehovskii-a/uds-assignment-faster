@@ -2,9 +2,6 @@
 
 @source "./components";
 
-/*
- * Faster design tokens
- */
 @theme {
   --color-background: #ffffff;
   --color-foreground: #1f1f1f;
@@ -16,14 +13,12 @@
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
 
-  /* TapTap Primary ramp (see button/SPEC.md, input/SPEC.md, dialog/SPEC.md) */
   --color-primary-300: #b0ebec;
   --color-primary-400: #7ddde1;
   --color-primary-500: #47cfd6;
   --color-primary-600: #15c5ce;
   --color-primary-700: #00abb6;
 
-  /* TapTap Neutral ramp (see button/SPEC.md, input/SPEC.md, dialog/SPEC.md) */
   --color-neutral-50: #fafafa;
   --color-neutral-100: #f5f5f5;
   --color-neutral-200: #eeeeee;
@@ -40,7 +35,6 @@
   --shadow-elevation-4:
     0 8px 20px rgb(0 0 0 / 0.06), 0 24px 60px rgb(0 0 0 / 0.12);
 
-  /* Typography (see typography/SPEC.md) */
   --text-h1: 30px;
   --text-h1--line-height: 38px;
   --text-h2: 24px;
