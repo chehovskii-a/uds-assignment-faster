@@ -1,10 +1,22 @@
 {
-  "name": "@faster/faster",
+  "name": "@chehovskii-a/faster",
   "version": "0.0.1",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chehovskii-a/uds-assignment-faster.git",
+    "directory": "libs/faster"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist"
+  ],
   "imports": {
     "#/*": [
       "./src/*.ts",

@@ -1,5 +1,5 @@
 module.exports = {
-  displayName: '@faster/faster',
+  displayName: '@chehovskii-a/faster',
   preset: '../../jest.preset.js',
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
