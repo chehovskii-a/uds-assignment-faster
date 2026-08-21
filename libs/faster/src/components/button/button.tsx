@@ -27,7 +27,7 @@ export const buttonVariants = cva(
     'items-center',
     'justify-center',
     'whitespace-nowrap',
-    'rounded-[4px]',
+    'rounded-[8px]',
     'outline-none',
     'transition-colors',
     'aria-disabled:cursor-default',
@@ -77,9 +77,9 @@ export const buttonVariants = cva(
         ],
       },
       size: {
-        large: 'h-10 px-2',
-        medium: 'h-9 px-2',
-        small: 'h-6 px-1',
+        large: 'h-10 px-2 rounded-[30px]',
+        medium: 'h-9 px-2 rounded-[20px]',
+        small: 'h-6 px-1 rounded-[10px]',
       },
     },
     compoundVariants: [
